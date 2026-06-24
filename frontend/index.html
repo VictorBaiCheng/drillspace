@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrillSpace V2.8.5｜复杂工业UI增强版 · 保留全部信息密度</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand brand-flagship">
+      <div class="brand-mark brand-mark-drill" aria-label="DrillSpace Logo">
+        <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
+          <path class="logo-shell" d="M32 4 L56 18 V46 L32 60 L8 46 V18 Z"/>
+          <path class="logo-well" d="M18 16 C28 17 36 22 39 32 C42 42 36 50 28 54"/>
+          <path class="logo-bit" d="M32 10 L41 24 L32 34 L23 24 Z"/>
+          <path class="logo-line" d="M17 43 H47"/>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div class="brand-eyebrow">DIGITAL DRILLING ENGINEERING OS</div>
+        <div class="brand-title">DRILLSPACE <span>V2.8.5</span></div>
+        <div class="brand-sub">Trajectory · Mechanics · Hydraulics · Realtime · AI Command</div>
+      </div>
+    </div>
+    <nav class="module-nav command-nav" id="moduleNav" aria-label="DrillSpace Main Navigation">
+      <button data-module="home"><span class="nav-code">H0</span><span class="nav-copy">首页<small>HOME</small></span></button>
+      <button class="active" data-module="design"><span class="nav-code">D1</span><span class="nav-copy">设计中心<small>DESIGN</small></span></button>
+      <button data-module="simulation"><span class="nav-code">S2</span><span class="nav-copy">仿真中心<small>SIMULATION</small></span></button>
+      <button data-module="operation"><span class="nav-code">O3</span><span class="nav-copy">作业中心<small>OPERATION</small></span></button>
+      <button data-module="drilling"><span class="nav-code">R4</span><span class="nav-copy">司钻中心<small>DRILLING</small></span></button>
+      <button data-module="data"><span class="nav-code">DA</span><span class="nav-copy">数据中心<small>DATA</small></span></button>
+      <button data-module="knowledge"><span class="nav-code">K6</span><span class="nav-copy">知识中心<small>KNOWLEDGE</small></span></button>
+      <button data-module="system"><span class="nav-code">SY</span><span class="nav-copy">系统管理<small>SYSTEM</small></span></button>
+    </nav>
+    <div class="top-actions">
+      <input class="global-search" placeholder="搜索井 / 轨迹 / 接口 / 风险" />
+      <button class="mode-chip" id="apiModeBtn">MOCK</button>
+      <button class="compact-btn" id="apiStatusBtn">API</button>
+      <button class="compact-btn danger-dot">12</button>
+      <div class="user-chip"><b>张</b><span>工程师 张三<br><small>Drilling Engineer</small></span></div>
+    </div>
+  </header>
+
+  <aside class="project-panel">
+    <div class="panel-head compact">
+      <div><b>项目与井浏览器</b><small>Oilfield / Block / Wellbore / Project</small></div>
+      <button class="mini-primary" id="newProjectBtn">+ 新建</button>
+    </div>
+    <input class="side-search" placeholder="搜索油田 / 区块 / 井筒 / 项目" />
+    <div class="tree" id="projectTree"></div>
+
+    <div class="quick-panel">
+      <div class="panel-head compact"><div><b>轨迹快速操作</b><small>Quick Actions</small></div></div>
+      <div class="quick-grid">
+        <button id="newTrajectoryBtn">新建设计轨迹</button>
+        <button id="importSurveyBtn">导入测斜</button>
+        <button id="openTemplateBtn">设计模板</button>
+        <button id="collisionBtn">防碰扫描</button>
+        <button id="calcBtnSide">刷新计算</button>
+        <button id="saveBtnSide">保存版本</button>
+      </div>
+    </div>
+
+    <div class="quick-panel">
+      <div class="panel-head compact"><div><b>轨迹子系统</b><small>Subsystem Route Map</small></div></div>
+      <div class="route-list" id="subsystemRouteList"></div>
+    </div>
+  </aside>
+
+  <main class="main-canvas">
+    <section class="kpi-strip">
+      <div class="kpi"><span>当前模式</span><b id="apiModeKpi">MOCK</b><em>Mock/API 双模式</em></div>
+      <div class="kpi"><span>轨迹版本</span><b id="trajectoryVersionKpi">V2.8.5-A5123</b><em>Industrial</em></div>
+      <div class="kpi"><span>轨迹数量</span><b id="trajCount">5</b><em>设计/实测/仿真</em></div>
+      <div class="kpi"><span>测点数量</span><b id="rowCountKpi">1200</b><em>Excel式主表</em></div>
+      <div class="kpi"><span>最大DLS</span><b id="maxDlsKpi">3.85°/30m</b><em class="safe">安全</em></div>
+      <div class="kpi"><span>防碰风险</span><b id="collisionRiskKpi">中低</b><em>SF 1.86</em></div>
+    </section>
+
+    <section class="subtab-row command-ribbon" id="subtabRow" aria-label="WellPath Command Ribbon">
+      <button class="active" data-module="design"><span>01</span><b>轨迹设计</b><em>DESIGN</em></button>
+      <button data-module="management"><span>02</span><b>轨迹管理</b><em>MANAGE</em></button>
+      <button data-module="survey"><span>03</span><b>轨迹测量</b><em>SURVEY</em></button>
+      <button data-module="view"><span>04</span><b>轨迹视图</b><em>VIEW</em></button>
+      <button data-module="deviation"><span>05</span><b>偏差分析</b><em>DEVIATION</em></button>
+      <button data-module="control"><span>06</span><b>轨迹控制</b><em>CONTROL</em></button>
+      <button data-module="collision"><span>07</span><b>防碰扫描</b><em>ANTI-COLLISION</em></button>
+      <button data-module="api"><span>08</span><b>接口状态</b><em>API</em></button>
+      <button data-module="importExport"><span>09</span><b>导入导出</b><em>IMPORT</em></button>
+    </section>
+
+    <section class="trajectory-workbench">
+      <aside class="trajectory-left">
+        <div class="work-card tight">
+          <div class="card-title-row"><b>当前轨迹</b><button class="link-btn" id="openTrajectoryManagerBtn">管理</button></div>
+          <div class="active-trajectory-card">
+            <b id="activeTrajectoryName">B-1井 设计轨迹 A5123</b>
+            <span>类型：水平井 · 状态：编辑中 · 来源：MyDrill / RSDAS 功能映射</span>
+            <div class="mini-status-row"><i></i><em>已加载 MD / INC / AZI / TVD / NS / EW / DLS / Build / Turn</em></div>
+          </div>
+        </div>
+
+        <div class="work-card tight">
+          <div class="card-title-row"><b>设计参数</b><button class="link-btn" id="applyFormBtn">应用</button></div>
+          <div class="form-grid dense">
+            <label>坐标系<select id="coordSys"><option>CGCS2000 / 高斯克吕格</option><option>WGS84 / UTM</option></select></label>
+            <label>计算方法<select id="calcMethod"><option>最小曲率法 Minimum Curvature</option><option>平均角法 Average Angle</option><option>曲率半径法 Radius of Curvature</option></select></label>
+            <label>测深间隔<input id="depthInterval" value="30" /></label>
+            <label>目标靶位<select id="targetSelect"><option>TGT-1 / 沙河街组</option><option>TGT-2 / 东营组</option></select></label>
+            <label>轨迹类型<select id="wellType"><option value="H">水平井</option><option value="J">J形井</option><option value="S">S形井</option></select></label>
+            <label>API Base<input id="apiBaseUrl" value="http://127.0.0.1:8000" /></label>
+          </div>
+        </div>
+
+        <div class="work-card tight selected-inspector">
+          <div class="card-title-row"><b>当前行属性</b><span id="selectedRowTag">Row 1</span></div>
+          <div class="form-grid row-props" id="rowPropForm"></div>
+          <div class="btn-row">
+            <button id="applyRowBtn">应用</button>
+            <button id="insertAfterBtn">插入</button>
+            <button class="danger" id="deleteRowBtn">删除</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="editor-zone">
+        <div class="editor-header">
+          <div>
+            <h2 id="pageTitle">井眼轨迹设计 · Excel式工业编辑器</h2>
+            <p id="pageSubtitle">表格为主窗口，侧面图、水平图、井斜、方位、DLS、防碰扫描通过按钮在同一窗口内切换。</p>
+          </div>
+          <div class="editor-actions">
+            <button id="importBtn">导入预览</button>
+            <button id="exportBtn">导出CSV</button>
+            <button id="interpolateBtn">插值</button>
+            <button id="calculateBtn" class="primary">刷新计算</button>
+            <button id="saveBtn" class="success">保存版本</button>
+          </div>
+        </div>
+
+        <div class="view-switch">
+          <button class="active" data-view="grid">轨迹数据表</button>
+          <button data-view="profile">侧面图</button>
+          <button data-view="plan">水平图</button>
+          <button data-view="inc">井斜</button>
+          <button data-view="azi">方位</button>
+          <button data-view="dls">DLS</button>
+          <button data-view="build">造斜率</button>
+          <button data-view="turn">偏转率</button>
+          <button data-view="deviation">偏差</button>
+          <button data-view="collision">防碰</button>
+        </div>
+
+        <div class="editor-panel" id="editorPanel">
+          <div class="grid-toolbar">
+            <div class="table-status"><b id="workbookTitle">轨迹工作簿 / Trajectory Workbook</b><span id="rowCountLabel">1200 rows · editable</span></div>
+            <div class="table-tools">
+              <button id="addRowBtn">新增行</button>
+              <button id="moveUpBtn">上移</button>
+              <button id="moveDownBtn">下移</button>
+              <button id="clearBtn">清空</button>
+              <button id="openLargeGridBtn">全屏表格</button>
+            </div>
+          </div>
+          <div id="editorContent" class="editor-content"></div>
+        </div>
+      </section>
+
+      <aside class="trajectory-right">
+        <div class="work-card tight summary-card">
+          <div class="card-title-row"><b>轨迹摘要</b><button class="link-btn" id="summaryDetailBtn">详情</button></div>
+          <div class="compact-metrics" id="compactMetrics"></div>
+        </div>
+        <div class="work-card tight">
+          <div class="card-title-row"><b>防碰与质量</b><span class="tag-medium" id="qualityTag">中低风险</span></div>
+          <div class="risk-lines" id="riskLines"></div>
+        </div>
+        <div class="work-card tight">
+          <div class="card-title-row"><b>设计模板</b><button class="link-btn" id="templateBtn2">打开</button></div>
+          <div class="template-list">
+            <button data-template="J">J形井<span>KOP + 一段造斜</span></button>
+            <button data-template="S">S形井<span>增斜 + 稳斜 + 降斜</span></button>
+            <button data-template="H" class="active">水平井<span>双增斜 + 水平段</span></button>
+          </div>
+        </div>
+        <div class="work-card tight">
+          <div class="card-title-row"><b>well-path API</b><button class="link-btn" id="apiContractBtn">合同</button></div>
+          <div class="api-list" id="apiList"></div>
+        </div>
+        <div class="work-card tight log-card-inline">
+          <div class="card-title-row"><b>操作日志</b><button class="link-btn" id="clearLogBtn">清空</button></div>
+          <div id="logList" class="log-list"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <aside class="right-alerts">
+    <div class="alert-card">
+      <div class="panel-head compact"><div><b>风险预警</b><small>Risk Alerts</small></div><button class="link-btn" id="refreshRiskBtn">刷新</button></div>
+      <div class="alert-list" id="alertList"></div>
+    </div>
+    <div class="alert-card">
+      <div class="panel-head compact"><div><b>接口调用记录</b><small>API Invocation</small></div><button class="link-btn" id="apiHistoryBtn">更多</button></div>
+      <div id="apiHistoryList" class="api-history"></div>
+    </div>
+    <div class="alert-card">
+      <div class="panel-head compact"><div><b>当前任务</b><small>Current Tasks</small></div><button class="link-btn">更多</button></div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+  </aside>
+
+  <footer class="statusbar">
+    <span>系统状态：<b class="ok">正常运行</b></span>
+    <span id="serviceStatusText">well-path：Mock Mode</span>
+    <span id="statusTime">--</span>
+    <span>在线用户：28</span>
+    <span>CPU：32%</span>
+    <span>内存：48%</span>
+    <span>网络：18ms</span>
+  </footer>
+</div>
+
+<input type="file" id="fileInput" accept=".csv,.txt,.las" hidden />
+<div class="modal-mask" id="modalMask">
+  <div class="modal" id="modalBox"></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
