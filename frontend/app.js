@@ -1,4 +1,4 @@
-/* DrillSpace V2.8.5 Complex Industrial UI + Collision View Manager
+/* DrillSpace V2.8.9 MyDrill DLL Calibration + Backend Accuracy Alignment
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -174,6 +174,38 @@ const trajectoryApiMap = {
     action: 'DrillSpace 新后端设计/实测偏差分析',
     payload: 'design rows + survey rows',
     result: 'DeviationAnalysisResponse'
+  },
+  engineInfo: {
+    method: 'GET',
+    path: '/api/well-path/engine-info',
+    module: '后端引擎',
+    action: '查看 FastAPI 轨迹/防碰引擎版本',
+    payload: 'None',
+    result: 'EngineInfo'
+  },
+  calibrationTemplate: {
+    method: 'GET',
+    path: '/api/well-path/calibration/template',
+    module: 'DLL对照校准',
+    action: '下载/查看 MyDrill 对照CSV字段模板',
+    payload: 'None',
+    result: 'CalibrationTemplate'
+  },
+  calibrationSample: {
+    method: 'GET',
+    path: '/api/well-path/calibration/sample',
+    module: 'DLL对照校准',
+    action: '运行内置样本对照，检查校准链路',
+    payload: 'None',
+    result: 'CalibrationReport'
+  },
+  calibrationCompare: {
+    method: 'POST',
+    path: '/api/well-path/calibration/compare',
+    module: 'DLL对照校准',
+    action: '输入 MyDrill DLL 输出结果，与 FastAPI 最小曲率结果逐列比较',
+    payload: 'reference_rows + optional input_rows + tolerance',
+    result: 'CalibrationReport'
   },
   importCsv: {
     method: 'POST',
@@ -932,7 +964,7 @@ function renderTrajectoryControl(){
 function renderApiContractInline(){
   $('workbookTitle').textContent = 'well-path API 映射 / Contract';
   $('rowCountLabel').textContent = 'DrillSpace 前端动作 → MyDrill Java well-path 接口';
-  $('editorContent').innerHTML = `<div class="submodule-content">${apiContractHtml()}<div class="btn-line" style="margin-top:10px"><button class="primary" onclick="toggleApiMode()">切换 Mock/API</button><button onclick="testApiConnection()">测试连接</button><button onclick="exportApiMap()">导出接口映射</button></div></div>`;
+  $('editorContent').innerHTML = `<div class="submodule-content">${apiContractHtml()}<div class="btn-line" style="margin-top:10px"><button class="primary" onclick="toggleApiMode()">切换 Mock/API</button><button onclick="testApiConnection()">测试连接</button><button onclick="testBackendHealth()">健康检查</button><button onclick="exportApiMap()">导出接口映射</button></div></div>`;
 }
 
 function renderImportExportPanel(){
@@ -1243,26 +1275,52 @@ function collisionMiniSvg(points){
   return collisionDistanceSvg(points);
 }
 
+
+function closeModal(){
+  const mask = $('modalMask');
+  if(mask) mask.classList.remove('show');
+}
+window.closeModal = closeModal;
+
 function showCollisionSettings(){
   showModal('防碰扫描设置', `
     <div class="modal-grid">
       <label>比较井 / Neighbor Well<input id="collisionNeighborInput" value="${esc(state.collisionSettings.neighborWell)}"></label>
       <label>搜索半径 m<input id="collisionRadiusInput" value="${state.collisionSettings.searchRadius}"></label>
       <label>误差半径 m<input id="collisionErrorInput" value="${state.collisionSettings.errorRadius}"></label>
-      <label>扫描方法<select id="collisionMethodInput"><option value="nearestDistance">最近距离扫描法</option><option value="flatScan">法平面扫描法</option><option value="separationDistance">分离距</option><option value="separationFactor">分离系数</option></select></label>
+      <label>扫描方法<select id="collisionMethodInput">
+        <option value="nearestDistance">最近距离扫描法</option>
+        <option value="flatScan">法平面扫描法</option>
+        <option value="separationDistance">分离距 / 分离矩阵</option>
+        <option value="separationFactor">分离系数</option>
+        <option value="errorEllipsoid">误差椭球</option>
+      </select></label>
+    </div>
+    <div class="small-note" style="margin-top:10px">
+      V2.8.6：设置应用后会同时刷新防碰数据，并保持当前单视图/并列对比布局。
     </div>`,
-    `<button onclick="closeModal()">取消</button><button class="primary" onclick="applyCollisionSettings()">应用并扫描</button>`
+    () => applyCollisionSettings(),
+    {wide:true}
   );
+  setTimeout(() => {
+    const sel = $('collisionMethodInput');
+    if(sel) sel.value = state.collisionMethod || 'nearestDistance';
+  }, 0);
 }
 
 function applyCollisionSettings(){
-  state.collisionSettings.neighborWell = $('collisionNeighborInput').value || 'B-2井';
-  state.collisionSettings.searchRadius = num($('collisionRadiusInput').value) || 80;
-  state.collisionSettings.errorRadius = num($('collisionErrorInput').value) || 18;
-  const method = $('collisionMethodInput').value || 'nearestDistance';
-  closeModal();
+  state.collisionSettings.neighborWell = $('collisionNeighborInput')?.value || 'B-2井';
+  state.collisionSettings.searchRadius = num($('collisionRadiusInput')?.value) || 80;
+  state.collisionSettings.errorRadius = num($('collisionErrorInput')?.value) || 18;
+  const method = $('collisionMethodInput')?.value || 'nearestDistance';
+  if(method === 'nearestDistance') state.collisionView = 'nearest';
+  if(method === 'flatScan') state.collisionView = 'normalPlane';
+  if(method === 'separationDistance') state.collisionView = 'separationMatrix';
+  if(method === 'separationFactor') state.collisionView = 'separationFactor';
+  if(method === 'errorEllipsoid') state.collisionView = 'ellipsoid';
   runCollisionScan(method);
 }
+
 
 function addRow(after=false){
   const base = state.rows[after ? state.selectedRow : state.rows.length-1] || createEmptyRow();
@@ -1436,6 +1494,7 @@ function buildDefaultPayload(key){
 function mockApiResult(key){
   if(key === 'calculateTable') return state.rows.map(r => ({...r}));
   if(key === 'listTrajectory') return state.trajectories;
+  if(['engineInfo','calibrationTemplate','calibrationSample','calibrationCompare'].includes(key)) return {ok:true, module:'DLL对照校准样本', maxAbs:{TVD:0.0,NS:0.0,EW:0.0}, verdict:'MOCK'};
   if(['collisionScan','flatScan','nearestDistance','separationDistance','separationFactor','errorEllipsoid'].includes(key)) return localCollisionScan(key === 'flatScan' ? 'flatScan' : key === 'collisionScan' ? state.collisionMethod : key);
   return { ok:true, key, mock:true, rows: state.rows.length };
 }
@@ -1582,7 +1641,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.8.5-A5123');
+  addLog('保存轨迹版本 V2.8.9-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -1693,6 +1752,21 @@ window.showCollisionSettings = showCollisionSettings;
 window.runCollisionScan = runCollisionScan;
 window.applyCollisionSettings = applyCollisionSettings;
 
+
+async function testBackendHealth(){
+  const base = (state.apiBaseUrl || 'http://127.0.0.1:8000').replace(/\/$/,'');
+  try{
+    const resp = await fetch(base + '/api/health');
+    const json = await resp.json();
+    toast(`后端连接正常：${json.status || 'ok'} / ${json.version || 'V2.8.6'}`);
+    addLog('FastAPI 后端健康检查通过');
+  }catch(err){
+    toast(`后端健康检查失败：${err.message}`);
+    addLog('FastAPI 后端健康检查失败');
+  }
+}
+window.testBackendHealth = testBackendHealth;
+
 function apiStatus(){
   showModal('well-path API 状态 / MyDrill 接口映射', `<div class="small-note">当前模式：<b>${state.apiMode.toUpperCase()}</b>；BaseURL：<code>${esc(state.apiBaseUrl)}</code></div>${apiContractHtml()}<div class="modal-grid" style="margin-top:10px"><label>API Base URL<input id="modalApiBase" value="${esc(state.apiBaseUrl)}"></label><label>调用模式<select id="modalApiMode"><option value="mock">mock</option><option value="api">api</option></select></label></div>`, () => { state.apiBaseUrl = $('modalApiBase')?.value || state.apiBaseUrl; state.apiMode = $('modalApiMode')?.value || state.apiMode; localStorage.setItem('drillspace-api-base', state.apiBaseUrl); localStorage.setItem('drillspace-api-mode', state.apiMode); if($('apiBaseUrl')) $('apiBaseUrl').value = state.apiBaseUrl; updateSummary(); }, {extraWide:true});
   setTimeout(()=>{ if($('modalApiMode')) $('modalApiMode').value = state.apiMode; },0);
@@ -1799,7 +1873,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.8.5 复杂工业UI增强版');
+  addLog('打开 DrillSpace V2.8.9 MyDrill DLL 对照校准版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();

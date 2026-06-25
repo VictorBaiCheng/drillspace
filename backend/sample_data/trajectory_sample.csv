@@ -1,0 +1,10 @@
+MD,INC,AZI,Type,Remark
+0,0,121.5,井口,Surface
+432,0,121.5,直井段,KOP before build
+1250,8.5,121.5,造斜段,KOP
+2680,32,121.5,增斜段,Build End
+3180,32,121.5,稳斜段,Hold
+4320,32,121.5,稳斜段,Hold
+5320,10,121.5,降斜段,Landing
+5620,10,121.5,水平段,Auto point
+5920,10,121.5,水平段,Target

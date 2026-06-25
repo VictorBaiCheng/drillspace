@@ -914,3 +914,290 @@ body.resizing .trajectory-sheet input, body.resizing .trajectory-sheet select{bo
 
 /* 轻微增强，不动布局 */
 button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ease}
+
+
+/* =========================================================
+   DrillSpace V2.8.6 Interaction Hardening
+   保留 V2.8.5 复杂工业UI，只强化 API接入/按钮反馈/状态识别。
+   ========================================================= */
+.mode-chip.api{
+  background:#0e9f6e !important;
+  border-color:#0e9f6e !important;
+  color:#fff !important;
+}
+.mode-chip:not(.api){
+  background:#102a48 !important;
+  border-color:#35516d !important;
+}
+.api-history div b,
+.api-list span{
+  font-weight:950;
+}
+.call-ok{
+  color:#0e9f6e !important;
+  border-color:#a7e6c7 !important;
+  background:#eefbf4 !important;
+}
+.call-mock{
+  color:#b77900 !important;
+  border-color:#f2d18a !important;
+  background:#fff8e8 !important;
+}
+.call-fail{
+  color:#d94444 !important;
+  border-color:#f0b4b4 !important;
+  background:#fff1f1 !important;
+}
+.editor-actions button:active,
+.quick-grid button:active,
+.collision-view-tabs-v281 button:active,
+.collision-scan-actions-v281 button:active{
+  transform:translateY(1px);
+}
+.table-tools button:hover,
+.btn-row button:hover,
+.link-btn:hover,
+.mini-primary:hover{
+  background:#eef5fd !important;
+  border-color:#9ebfe1 !important;
+}
+.statusbar span:nth-child(2){
+  font-weight:900;
+  color:#0b4f9f;
+}
+
+
+/* =========================================================
+   DrillSpace V2.8.7 Backend Accuracy Alignment Badge
+   保留复杂工业UI，只增强后端算法接入状态显示。
+   ========================================================= */
+.statusbar span:nth-child(2)::after{
+  content:" · Engine V2.8.7 Minimum Curvature / Collision";
+  color:#0e9f6e;
+  font-weight:950;
+}
+.api-list div:nth-child(1),
+.api-list div:nth-child(2),
+.api-list div:nth-child(5),
+.api-list div:nth-child(6){
+  background:linear-gradient(90deg,rgba(14,159,110,.08),rgba(255,255,255,0));
+}
+
+
+/* =========================================================
+   DrillSpace V2.8.8 Clean Complex Industrial UI
+   不收敛、不删按钮、不减信息量；把粗彩条降级为清新细线/顶线/状态徽标。
+   ========================================================= */
+:root{--fresh-blue:#1d5fd0;--fresh-cyan:#0ea5c6;--fresh-green:#13a66f;--fresh-amber:#d48a09;--fresh-purple:#7c5cff;--fresh-red:#d94444;}
+.app-shell{background:linear-gradient(180deg,#f6f9fd 0%,#e8f0f8 100%) !important;}
+.main-canvas,.project-panel,.right-alerts{background:#eef5fb !important;}
+.work-card,.quick-panel,.alert-card,.editor-panel,.editor-header,.subtab-row,.view-switch,.tree{box-shadow:0 2px 7px rgba(15,52,92,.075) !important;border-color:#c2d0df !important;}
+.command-nav button:after{display:none !important;}
+.command-nav button{background:linear-gradient(180deg,#ffffff,#f5f8fb) !important;border-right:1px solid #e3ebf3 !important;color:#263f5f !important;}
+.command-nav button.active{background:#eef5ff !important;color:#0d55bd !important;box-shadow:inset 0 3px 0 var(--fresh-blue), inset 0 -1px 0 #ffffff !important;}
+.nav-code{background:#f2f6fb !important;border-color:#cbd8e7 !important;color:#607389 !important;}
+.command-nav button.active .nav-code{background:#ffffff !important;color:#0d55bd !important;border-color:#9fc2ef !important;}
+.command-ribbon{background:#ffffff !important;border-color:#b8c8d9 !important;border-left:0 !important;}
+.command-ribbon button{border-left-width:1px !important;border-left-color:#c9d6e4 !important;border-top:3px solid #e5edf5 !important;background:#fbfdff !important;color:#223c5d !important;box-shadow:none !important;}
+.command-ribbon button:nth-child(1),.command-ribbon button:nth-child(2),.command-ribbon button:nth-child(3){border-top-color:#9fc2ef !important;}
+.command-ribbon button:nth-child(4),.command-ribbon button:nth-child(5),.command-ribbon button:nth-child(6){border-top-color:#9bdadf !important;}
+.command-ribbon button:nth-child(7){border-top-color:#f0aaa8 !important;}
+.command-ribbon button:nth-child(8),.command-ribbon button:nth-child(9),.command-ribbon button:nth-child(10){border-top-color:#c8b8ff !important;}
+.command-ribbon button.active{background:#eef5ff !important;border-top-color:var(--fresh-blue) !important;color:#0d55bd !important;box-shadow:inset 0 1px 0 #ffffff !important;}
+.command-ribbon button span{background:#f4f7fb !important;border-color:#d0dbe7 !important;color:#63758a !important;}
+.command-ribbon button.active span{color:#0d55bd !important;border-color:#a8c8ee !important;background:#ffffff !important;}
+.view-switch{background:#ffffff !important;border-color:#bdccdc !important;}
+.view-switch button:before{display:none !important;}
+.view-switch button{background:#fbfdff !important;border-color:#d2deea !important;color:#344a64 !important;padding-left:10px !important;box-shadow:none !important;}
+.view-switch button:nth-child(-n+3){background:linear-gradient(180deg,#ffffff,#f7fbff) !important;}
+.view-switch button:nth-child(n+4):nth-child(-n+8){background:linear-gradient(180deg,#ffffff,#f8fcfa) !important;}
+.view-switch button:nth-child(n+9){background:linear-gradient(180deg,#ffffff,#fbf8ff) !important;}
+.view-switch button.active{background:#eaf3ff !important;color:#0d55bd !important;border-color:#9ebfe1 !important;box-shadow:inset 0 2px 0 var(--fresh-blue) !important;}
+.editor-actions{background:#f8fbff !important;border-color:#c4d2e1 !important;}
+.editor-actions button{border-left-width:1px !important;border-radius:2px !important;}
+#importBtn,#exportBtn,#interpolateBtn{border-left:1px solid #c5d1de !important;}
+#importBtn{box-shadow:inset 0 2px 0 #9bdadf !important;}#exportBtn{box-shadow:inset 0 2px 0 #c6d0dc !important;}#interpolateBtn{box-shadow:inset 0 2px 0 #f0c77a !important;}
+#calculateBtn{background:#1d5fd0 !important;border-color:#1d5fd0 !important;color:#fff !important;}#saveBtn{background:#13a66f !important;border-color:#13a66f !important;color:#fff !important;}
+.quick-grid button{border-left:1px solid #d0ddeb !important;border-top:3px solid #dbe6f2 !important;background:#ffffff !important;}
+.quick-grid button:nth-child(1),.quick-grid button:nth-child(2){border-top-color:#9fc2ef !important;}.quick-grid button:nth-child(3){border-top-color:#c8b8ff !important;}.quick-grid button:nth-child(4){border-top-color:#f0aaa8 !important;}.quick-grid button:nth-child(5){border-top-color:#f0c77a !important;}.quick-grid button:nth-child(6){border-top-color:#9fdcc1 !important;}
+.route-list button{border-left-width:2px !important;background:#fbfdff !important;}
+.route-list button:nth-child(1),.route-list button:nth-child(2),.route-list button:nth-child(3){border-left-color:#9fc2ef !important;}.route-list button:nth-child(4),.route-list button:nth-child(5),.route-list button:nth-child(6){border-left-color:#9bdadf !important;}.route-list button:nth-child(7){border-left-color:#f0aaa8 !important;}.route-list button:nth-child(8),.route-list button:nth-child(9){border-left-color:#c8b8ff !important;}
+.route-list button.active{background:#eef5ff !important;border-left-color:#1d5fd0 !important;}
+.collision-view-tabs-v281{background:#ffffff !important;border-color:#bdccdc !important;}
+.collision-view-tabs-v281 button{border-left-width:1px !important;border-left-color:#ccd8e5 !important;border-top:3px solid #e5edf5 !important;background:#fbfdff !important;box-shadow:none !important;}
+.collision-view-tabs-v281 button:nth-child(1){border-top-color:#9fc2ef !important;}.collision-view-tabs-v281 button:nth-child(2),.collision-view-tabs-v281 button:nth-child(3){border-top-color:#9bdadf !important;}.collision-view-tabs-v281 button:nth-child(4){border-top-color:#f0c77a !important;}.collision-view-tabs-v281 button:nth-child(5){border-top-color:#9fdcc1 !important;}.collision-view-tabs-v281 button:nth-child(6){border-top-color:#c8b8ff !important;}.collision-view-tabs-v281 button:nth-child(7){border-top-color:#c6d0dc !important;}
+.collision-view-tabs-v281 button.active{background:#eef5ff !important;color:#0d55bd !important;border-top-color:#1d5fd0 !important;}
+.collision-scan-actions-v281{background:#fbfdff !important;border-color:#c5d1de !important;}.collision-scan-actions-v281 button{border-left:1px solid #c9d6e4 !important;border-top:2px solid #dbe6f2 !important;background:#ffffff !important;box-shadow:none !important;}
+.collision-scan-actions-v281 button:nth-child(1){border-top-color:#9fc2ef !important;}.collision-scan-actions-v281 button:nth-child(2){border-top-color:#9bdadf !important;}.collision-scan-actions-v281 button:nth-child(3){border-top-color:#f0c77a !important;}.collision-scan-actions-v281 button:nth-child(4){border-top-color:#9fdcc1 !important;}.collision-scan-actions-v281 button:nth-child(5){border-top-color:#c8b8ff !important;}
+.collision-summary-grid.v281 .collision-summary,.collision-summary{border-left-width:2px !important;background:#ffffff !important;}.collision-focus-title{box-shadow:inset 2px 0 0 var(--fresh-blue) !important;}
+.collision-compare-grid-v281 .collision-card,.collision-result-card,.right-alerts .alert-card{box-shadow:0 1px 4px rgba(9,35,66,.06) !important;}.right-alerts .alert-card:nth-child(1){border-left:2px solid #f0aaa8 !important;}.right-alerts .alert-card:nth-child(2){border-left:2px solid #9fc2ef !important;}.right-alerts .alert-card:nth-child(3){border-left:2px solid #9fdcc1 !important;}
+.risk{border-left:0 !important;padding-left:28px !important;}.risk:before{width:10px !important;height:10px !important;top:14px !important;border-radius:50% !important;}
+.api-contract-table th,.trajectory-sheet th,.collision-table th,.mini-table th{background:#edf4fb !important;color:#263e5e !important;}.api-contract-table td,.trajectory-sheet td,.collision-table td{border-color:#e3edf6 !important;}.statusbar{background:#fbfdff !important;border-top-color:#c2d0df !important;}
+
+
+/* =========================================================
+   DrillSpace V2.8.8.1 Button Row Spacing Fix
+   修复：中间按钮行文字被压住、Collision View 标签行被横向滚动条挤压。
+   不删内容、不收敛，只增加行高、按钮高度、滚动条留白。
+   ========================================================= */
+
+/* 主编辑工具栏：新增行/上移/下移/清空/全屏表格不再压字 */
+.editor-panel{
+  grid-template-rows:44px 1fr !important;
+}
+.grid-toolbar{
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 10px !important;
+  align-items:center !important;
+  overflow:visible !important;
+}
+.table-status{
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+.table-status b{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.table-status span{
+  white-space:nowrap !important;
+}
+.table-tools{
+  flex:0 0 auto !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+}
+.table-tools button{
+  height:30px !important;
+  line-height:28px !important;
+  min-width:44px !important;
+  padding:0 10px !important;
+  white-space:nowrap !important;
+}
+
+/* 上层视图切换：轨迹数据表/侧面图/水平图等保持单行 */
+.view-switch{
+  height:38px !important;
+  min-height:38px !important;
+  padding:5px 6px !important;
+  align-items:center !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scrollbar-gutter:stable !important;
+}
+.view-switch button{
+  height:28px !important;
+  line-height:26px !important;
+  min-width:50px !important;
+  padding:0 11px !important;
+  white-space:nowrap !important;
+  flex:0 0 auto !important;
+}
+.view-switch::-webkit-scrollbar,
+.collision-view-tabs-v281::-webkit-scrollbar,
+.collision-scan-actions-v281::-webkit-scrollbar{
+  height:6px;
+}
+.view-switch::-webkit-scrollbar-thumb,
+.collision-view-tabs-v281::-webkit-scrollbar-thumb,
+.collision-scan-actions-v281::-webkit-scrollbar-thumb{
+  background:#c6d6e8;
+  border-radius:999px;
+}
+.view-switch::-webkit-scrollbar-track,
+.collision-view-tabs-v281::-webkit-scrollbar-track,
+.collision-scan-actions-v281::-webkit-scrollbar-track{
+  background:#edf4fb;
+}
+
+/* Collision View 标签：最近距离/法平面扫描/水平扫描等不再被压扁 */
+.collision-workbench-v281{
+  gap:8px !important;
+  padding:8px !important;
+}
+.collision-vm-head{
+  min-height:38px !important;
+}
+.collision-view-tabs-v281{
+  height:50px !important;
+  min-height:50px !important;
+  padding:5px 6px !important;
+  align-items:center !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scrollbar-gutter:stable !important;
+}
+.collision-view-tabs-v281 button{
+  height:38px !important;
+  min-height:38px !important;
+  min-width:128px !important;
+  grid-template-columns:24px minmax(0,1fr) !important;
+  grid-template-rows:18px 12px !important;
+  column-gap:7px !important;
+  align-items:center !important;
+  align-content:center !important;
+  padding:0 10px 0 5px !important;
+  line-height:1 !important;
+  flex:0 0 auto !important;
+}
+.collision-view-tabs-v281 button span{
+  width:22px !important;
+  height:22px !important;
+  font-size:9px !important;
+}
+.collision-view-tabs-v281 button b{
+  font-size:11.5px !important;
+  line-height:15px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.collision-view-tabs-v281 button em{
+  font-size:7.5px !important;
+  line-height:10px !important;
+  white-space:nowrap !important;
+}
+
+/* 防碰扫描动作行：最近距离扫描/法平面扫描等不再贴边 */
+.collision-scan-actions-v281{
+  height:38px !important;
+  min-height:38px !important;
+  padding:5px 6px !important;
+  align-items:center !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scrollbar-gutter:stable !important;
+}
+.collision-scan-actions-v281 button{
+  height:28px !important;
+  line-height:26px !important;
+  min-width:94px !important;
+  padding:0 10px !important;
+  white-space:nowrap !important;
+  flex:0 0 auto !important;
+}
+
+/* 小屏/浏览器缩放场景：允许标签稍微缩短，但绝不压高度 */
+@media(max-width:1500px){
+  .collision-view-tabs-v281 button{min-width:116px !important;}
+  .collision-scan-actions-v281 button{min-width:88px !important;}
+  .table-tools button{padding:0 8px !important;}
+}
+
+
+/* =========================================================
+   DrillSpace V2.8.9 MyDrill DLL Calibration Marker
+   保留现有 UI，只强化“后端精度对齐 / DLL校准”状态识别。
+   ========================================================= */
+.statusbar span:nth-child(2)::after{
+  content:" · V2.8.9 DLL Calibration Ready";
+  color:#7c3aed;
+  font-weight:950;
+}
+.api-list div:has(span.call-ok),
+.api-list div:has(span.call-mock){
+  background:linear-gradient(90deg,rgba(124,58,237,.055),rgba(255,255,255,0));
+}
