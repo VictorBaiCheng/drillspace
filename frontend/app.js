@@ -1,4 +1,4 @@
-/* DrillSpace V2.8.9 MyDrill DLL Calibration + Backend Accuracy Alignment
+/* DrillSpace V2.9.1.1 Acceptance Sample Library Fix + Calibration Report
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -28,7 +28,9 @@ const state = {
   collisionMethod: 'nearestDistance',
   collisionSettings: { searchRadius: 80, errorRadius: 18, neighborWell: 'B-2井', method: '最近距离扫描法' },
   collisionView: 'normalPlane',
-  collisionLayout: 'single'
+  collisionLayout: 'single',
+  calibrationReport: null,
+  calibrationSource: 'sample'
 };
 
 
@@ -183,6 +185,30 @@ const trajectoryApiMap = {
     payload: 'None',
     result: 'EngineInfo'
   },
+  samplesList: {
+    method: 'GET',
+    path: '/api/well-path/samples',
+    module: '标准验收样本',
+    action: '获取内置标准验收样本库',
+    payload: 'None',
+    result: 'AcceptanceSampleMeta[]'
+  },
+  sampleDetail: {
+    method: 'GET',
+    path: '/api/well-path/samples/{sample_id}',
+    module: '标准验收样本',
+    action: '获取样本输入、DrillSpace结果、MyDrill-like参考结果',
+    payload: 'sample_id',
+    result: 'AcceptanceSamplePayload'
+  },
+  sampleCalibrate: {
+    method: 'POST',
+    path: '/api/well-path/samples/{sample_id}/calibrate',
+    module: '标准验收样本',
+    action: '运行指定标准样本对照校准',
+    payload: 'sample_id',
+    result: 'CalibrationReport'
+  },
   calibrationTemplate: {
     method: 'GET',
     path: '/api/well-path/calibration/template',
@@ -205,6 +231,14 @@ const trajectoryApiMap = {
     module: 'DLL对照校准',
     action: '输入 MyDrill DLL 输出结果，与 FastAPI 最小曲率结果逐列比较',
     payload: 'reference_rows + optional input_rows + tolerance',
+    result: 'CalibrationReport'
+  },
+  calibrationLatest: {
+    method: 'GET',
+    path: '/api/well-path/calibration/latest',
+    module: 'DLL对照校准',
+    action: '读取最近一次 MyDrill 对照校准报告',
+    payload: 'None',
     result: 'CalibrationReport'
   },
   importCsv: {
@@ -274,7 +308,8 @@ const submodules = [
   { key:'control', name:'轨迹控制', route:'/TrajectoryControl', desc:'方向控制、单井段控制、连续导向软着陆' },
   { key:'collision', name:'防碰扫描', route:'/CollisionScan/index', desc:'法平面、最近距离、分离距、分离系数、误差椭球' },
   { key:'api', name:'接口状态', route:'/well-path/api-map', desc:'MyDrill well-path API 映射、Mock/API 切换' },
-  { key:'importExport', name:'导入导出', route:'/TrajectoryImportExport', desc:'CSV/TXT预览、字段映射、异常行检查、正式上传' }
+  { key:'importExport', name:'导入导出', route:'/TrajectoryImportExport', desc:'CSV/TXT预览、字段映射、异常行检查、正式上传' },
+  { key:'calibration', name:'算法校准', route:'/Calibration/MyDrillAlignment', desc:'MyDrill DLL导出结果与DrillSpace后端最小曲率引擎逐列对照' }
 ];
 
 function $(id){ return document.getElementById(id); }
@@ -352,6 +387,7 @@ function setSubmodule(key){
   else if(key === 'collision') switchEditorView('collision');
   else if(key === 'api') renderApiContractInline();
   else if(key === 'importExport') renderImportExportPanel();
+  else if(key === 'calibration') renderCalibrationReportPage();
   addLog(`切换到${module.name}`);
 }
 
@@ -1494,7 +1530,7 @@ function buildDefaultPayload(key){
 function mockApiResult(key){
   if(key === 'calculateTable') return state.rows.map(r => ({...r}));
   if(key === 'listTrajectory') return state.trajectories;
-  if(['engineInfo','calibrationTemplate','calibrationSample','calibrationCompare'].includes(key)) return {ok:true, module:'DLL对照校准样本', maxAbs:{TVD:0.0,NS:0.0,EW:0.0}, verdict:'MOCK'};
+  if(['engineInfo','calibrationTemplate','calibrationSample','calibrationCompare','calibrationLatest'].includes(key)) return mockCalibrationReport();
   if(['collisionScan','flatScan','nearestDistance','separationDistance','separationFactor','errorEllipsoid'].includes(key)) return localCollisionScan(key === 'flatScan' ? 'flatScan' : key === 'collisionScan' ? state.collisionMethod : key);
   return { ok:true, key, mock:true, rows: state.rows.length };
 }
@@ -1641,7 +1677,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.8.9-A5123');
+  addLog('保存轨迹版本 V2.9.1-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -1751,6 +1787,274 @@ window.showDeviationSettings = showDeviationSettings;
 window.showCollisionSettings = showCollisionSettings;
 window.runCollisionScan = runCollisionScan;
 window.applyCollisionSettings = applyCollisionSettings;
+
+
+
+/* =========================================================
+   V2.9.0.1.1 Calibration Report Page Fix
+   补齐算法校准报告页渲染与“加载内置样本”按钮。
+   ========================================================= */
+function mockCalibrationReport(){
+  const metrics = {
+    TVD:{count:7,meanError:0,meanAbs:0.012,maxAbs:0.041,rmse:0.018},
+    NS:{count:7,meanError:0,meanAbs:0.016,maxAbs:0.052,rmse:0.022},
+    EW:{count:7,meanError:0,meanAbs:0.014,maxAbs:0.047,rmse:0.020},
+    DOGLEG:{count:7,meanError:0,meanAbs:0.003,maxAbs:0.012,rmse:0.005},
+    BUILD:{count:7,meanError:0,meanAbs:0.002,maxAbs:0.009,rmse:0.004},
+    TURN:{count:7,meanError:0,meanAbs:0.001,maxAbs:0.006,rmse:0.003}
+  };
+  const rowErrors = [];
+  for(let i=0;i<26;i++){
+    const md = i === 0 ? 0 : 400 + i * 180;
+    rowErrors.push({
+      index:i+1,
+      MD:md,
+      TVD_err:+(Math.sin(i/3)*0.035).toFixed(5),
+      NS_err:+(Math.cos(i/4)*0.045).toFixed(5),
+      EW_err:+(Math.sin(i/5)*0.040).toFixed(5),
+      DOGLEG_err:+(Math.sin(i/2)*0.010).toFixed(5),
+      BUILD_err:+(Math.cos(i/3)*0.008).toFixed(5),
+      TURN_err:+(Math.sin(i/4)*0.006).toFixed(5)
+    });
+  }
+  return {
+    ok:true,
+    verdict:'PASS',
+    engine:'FastAPI minimum-curvature-v2.9.0',
+    reference:'MyDrill/well-path DLL exported result',
+    stationCount:26,
+    referenceCount:26,
+    candidateCount:26,
+    tolerance:{TVD:0.05,NS:0.05,EW:0.05,DOGLEG:0.02,BUILD:0.02,TURN:0.02},
+    metrics,
+    exceeded:{},
+    rowErrors,
+    note:'内置样本用于检查报告页面、后端接口和导出链路。真实验收请粘贴 MyDrill 导出 CSV。'
+  };
+}
+
+function normalizeCalibrationReport(raw){
+  const report = raw?.data || raw?.result || raw || mockCalibrationReport();
+  report.metrics = report.metrics || {};
+  report.rowErrors = report.rowErrors || [];
+  report.exceeded = report.exceeded || {};
+  report.verdict = report.verdict || (Object.keys(report.exceeded).length ? 'REVIEW' : 'PASS');
+  return report;
+}
+
+function renderCalibrationReportPage(){
+  state.activeSubmodule = 'calibration';
+  state.editorView = 'calibration';
+  document.querySelectorAll('#subtabRow button').forEach(b => b.classList.toggle('active', b.dataset.module === 'calibration'));
+  const report = normalizeCalibrationReport(state.calibrationReport || mockCalibrationReport());
+  state.calibrationReport = report;
+
+  $('pageTitle').textContent = '算法校准 · MyDrill DLL 对照校准报告';
+  $('pageSubtitle').textContent = '/Calibration/MyDrillAlignment：旧 MyDrill/well-path DLL 导出结果与 DrillSpace FastAPI 最小曲率引擎逐列对照';
+  $('workbookTitle').textContent = 'MyDrill 对照校准报告 / Calibration Report';
+  $('rowCountLabel').textContent = `${report.stationCount || 0} stations · ${report.verdict || 'REVIEW'} · ${report.engine || 'FastAPI engine'}`;
+
+  const verdictClass = String(report.verdict || '').toUpperCase() === 'PASS' ? 'pass' : 'review';
+  const metricCols = ['TVD','NS','EW','DOGLEG','BUILD','TURN'];
+  const metricsHtml = metricCols.map(col => {
+    const m = report.metrics?.[col] || {};
+    const exceeded = report.exceeded && report.exceeded[col];
+    return `<div class="calib-metric ${exceeded?'review':'pass'}">
+      <span>${col} 最大误差</span>
+      <b>${fmt(m.maxAbs ?? 0, col==='DOGLEG'||col==='BUILD'||col==='TURN'?4:3)}</b>
+      <em>RMSE ${fmt(m.rmse ?? 0, col==='DOGLEG'||col==='BUILD'||col==='TURN'?4:3)} · N=${m.count || 0}</em>
+    </div>`;
+  }).join('');
+
+  $('editorContent').innerHTML = `<div class="submodule-content calibration-page-v290">
+    <div class="calibration-head ${verdictClass}">
+      <div>
+        <b>MyDrill / well-path DLL 对照校准报告</b>
+        <span>将旧系统导出的 MD/INC/AZI/TVD/NS/EW/DLS/Build/Turn 与 DrillSpace 后端重新计算结果逐列比较。</span>
+      </div>
+      <div class="calibration-verdict">
+        <strong>${esc(report.verdict || 'REVIEW')}</strong>
+        <small>${esc(state.calibrationSource || 'sample')}</small>
+      </div>
+    </div>
+
+    <div class="calibration-actions">
+      <button class="primary" onclick="loadCalibrationSample()">加载内置样本</button>
+      <button onclick="loadCalibrationLatest()">读取最新报告</button>
+      <button onclick="openCalibrationCsvModal()">粘贴 MyDrill CSV 对照</button>
+      <button onclick="exportCalibrationJson()">导出 JSON</button>
+      <button onclick="exportCalibrationErrorCsv()">导出误差 CSV</button>
+      <button onclick="callApiAction('calibrationTemplate')">查看字段模板</button>
+    </div>
+
+    <div class="calibration-kpi-grid">
+      <div class="calib-kpi ${verdictClass}"><span>总体结论</span><b>${esc(report.verdict || 'REVIEW')}</b><em>PASS / REVIEW</em></div>
+      <div class="calib-kpi"><span>对照测点</span><b>${report.stationCount || 0}</b><em>station pairs</em></div>
+      <div class="calib-kpi"><span>参考来源</span><b>${esc(report.reference || 'MyDrill')}</b><em>reference output</em></div>
+      <div class="calib-kpi"><span>计算引擎</span><b>${esc(report.engine || 'FastAPI')}</b><em>current backend</em></div>
+    </div>
+
+    <div class="calibration-metrics-grid">${metricsHtml}</div>
+
+    <div class="calibration-main-grid">
+      <section class="calibration-chart-card">
+        <div class="calibration-card-title"><b>逐测点误差曲线</b><span>TVD / NS / EW / DLS / Build / Turn error by MD</span></div>
+        ${calibrationErrorSvg(report)}
+      </section>
+      <section class="calibration-side-card">
+        <div class="calibration-card-title"><b>超差与说明</b><span>Exceeded tolerance / notes</span></div>
+        ${calibrationNotesHtml(report)}
+      </section>
+    </div>
+
+    <section class="calibration-table-card">
+      <div class="calibration-card-title"><b>逐测点误差表</b><span>前 500 行，真实 CSV 对照后自动更新</span></div>
+      <div class="calibration-table-wrap">${calibrationErrorTable(report)}</div>
+    </section>
+  </div>`;
+  addLog(`打开算法校准报告页：${report.verdict || 'REVIEW'}`);
+}
+
+async function loadCalibrationSample(){
+  const result = await callApiAction('calibrationSample', null, {silent:true});
+  state.calibrationReport = normalizeCalibrationReport(result);
+  state.calibrationSource = state.apiMode === 'api' ? 'backend sample' : 'mock sample';
+  renderCalibrationReportPage();
+  toast('已加载内置校准样本');
+  addLog('加载内置 MyDrill 对照样本');
+}
+
+async function loadCalibrationLatest(){
+  const result = await callApiAction('calibrationLatest', null, {silent:true});
+  state.calibrationReport = normalizeCalibrationReport(result);
+  state.calibrationSource = state.apiMode === 'api' ? 'latest report' : 'mock latest';
+  renderCalibrationReportPage();
+  toast('已读取最新校准报告');
+  addLog('读取最新校准报告');
+}
+
+function openCalibrationCsvModal(){
+  showModal('粘贴 MyDrill / well-path 导出 CSV', `
+    <div class="small-note">
+      请粘贴旧 MyDrill 导出的轨迹计算结果。建议字段：
+      <code>MD,INC,AZI,CL,TVD,NS,EW,VSEC,DOGLEG,TF,BUILD,TURN</code>
+    </div>
+    <textarea id="calibrationCsvBox" style="width:100%;height:330px;border:1px solid #cbd9e8;border-radius:3px;font-family:Consolas,monospace;margin-top:8px"
+placeholder="MD,INC,AZI,CL,TVD,NS,EW,VSEC,DOGLEG,TF,BUILD,TURN"></textarea>`,
+    () => compareCalibrationCsvText(),
+    {extraWide:true}
+  );
+}
+
+async function compareCalibrationCsvText(){
+  const csvText = $('calibrationCsvBox')?.value || '';
+  if(!csvText.trim()){
+    toast('CSV为空，未执行对照');
+    return;
+  }
+  const result = await callApiAction('calibrationCompare', {csvText}, {silent:true});
+  state.calibrationReport = normalizeCalibrationReport(result);
+  state.calibrationSource = 'pasted MyDrill CSV';
+  renderCalibrationReportPage();
+  toast('MyDrill CSV 对照完成');
+  addLog('完成 MyDrill CSV 对照校准');
+}
+
+function calibrationNotesHtml(report){
+  const exceeded = report.exceeded || {};
+  const keys = Object.keys(exceeded);
+  const noteClass = String(report.verdict || '').toUpperCase() === 'PASS' ? 'pass' : 'review';
+  const exceededHtml = keys.length
+    ? keys.map(k => `<div class="calibration-note review"><b>${esc(k)} 超差</b><span>maxAbs=${fmt(exceeded[k].maxAbs,4)}，tolerance=${fmt(exceeded[k].tolerance,4)}</span></div>`).join('')
+    : `<div class="calibration-note pass"><b>未发现超差列</b><span>当前对照结果满足内置容差。真实验收时应使用旧 MyDrill 导出数据重新校验。</span></div>`;
+  return `${exceededHtml}
+    <div class="calibration-note ${noteClass}">
+      <b>说明</b>
+      <span>${esc(report.note || '该报告用于校验 DrillSpace 后端轨迹引擎与旧 MyDrill/well-path 输出的一致性。')}</span>
+    </div>
+    <div class="calibration-note">
+      <b>建议流程</b>
+      <span>先点“加载内置样本”检查链路，再粘贴旧 MyDrill CSV 做正式对照，最后导出 JSON/CSV 作为阶段验收附件。</span>
+    </div>`;
+}
+
+function calibrationErrorSvg(report){
+  const rows = (report.rowErrors || []).slice(0,120);
+  if(!rows.length) return `<div class="calibration-empty">暂无误差曲线数据</div>`;
+  const w = 780, h = 360, padL = 54, padR = 20, padT = 24, padB = 40;
+  const cols = [
+    ['TVD_err','#1d5fd0'],
+    ['NS_err','#0ea5c6'],
+    ['EW_err','#13a66f'],
+    ['DOGLEG_err','#d48a09'],
+    ['BUILD_err','#7c5cff'],
+    ['TURN_err','#d94444']
+  ];
+  const mdMin = Math.min(...rows.map(r => num(r.MD)));
+  const mdMax = Math.max(...rows.map(r => num(r.MD)));
+  const maxAbs = Math.max(0.001, ...rows.flatMap(r => cols.map(c => Math.abs(num(r[c[0]])))));
+  const toX = md => padL + (num(md)-mdMin)/Math.max(1e-9,mdMax-mdMin)*(w-padL-padR);
+  const toY = v => padT + (maxAbs-num(v))/(maxAbs*2)*(h-padT-padB);
+  const zeroY = toY(0);
+  const polylines = cols.map(([key,color]) => {
+    const pts = rows.map(r => `${toX(r.MD).toFixed(1)},${toY(r[key]||0).toFixed(1)}`).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8"/>`;
+  }).join('');
+  const legend = cols.map(([key,color],i)=>`<g transform="translate(${padL+i*108},16)"><rect width="18" height="3" fill="${color}"/><text x="24" y="4" font-size="10" fill="#50627a">${key.replace('_err','')}</text></g>`).join('');
+  return `<svg class="calibration-error-svg" viewBox="0 0 ${w} ${h}">
+    <defs><pattern id="calibGrid" width="42" height="28" patternUnits="userSpaceOnUse"><path d="M42 0H0V28" fill="none" stroke="#e1eaf3"/></pattern></defs>
+    <rect width="${w}" height="${h}" fill="#fff"/>
+    <rect x="${padL}" y="${padT}" width="${w-padL-padR}" height="${h-padT-padB}" fill="url(#calibGrid)" stroke="#cbd8e7"/>
+    <line x1="${padL}" x2="${w-padR}" y1="${zeroY}" y2="${zeroY}" stroke="#64748b" stroke-dasharray="6 4"/>
+    ${polylines}
+    ${legend}
+    <text x="${w/2-28}" y="${h-10}" font-size="12" fill="#263e5e" font-weight="800">MD(m)</text>
+    <text x="12" y="${padT+10}" font-size="12" fill="#263e5e" font-weight="800">Error</text>
+  </svg>`;
+}
+
+function calibrationErrorTable(report){
+  const rows = (report.rowErrors || []).slice(0,500);
+  if(!rows.length) return `<div class="calibration-empty">暂无逐测点误差数据</div>`;
+  const cols = ['TVD','NS','EW','DOGLEG','BUILD','TURN'];
+  return `<table class="calibration-table">
+    <thead><tr><th>#</th><th>MD</th>${cols.map(c=>`<th>${c}误差</th>`).join('')}</tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr>
+      <td>${i+1}</td><td>${fmt(r.MD,1)}</td>
+      ${cols.map(c=>`<td>${fmt(r[c+'_err']||0, c==='DOGLEG'||c==='BUILD'||c==='TURN'?5:4)}</td>`).join('')}
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function exportCalibrationJson(){
+  const report = state.calibrationReport || mockCalibrationReport();
+  const blob = new Blob([JSON.stringify(report,null,2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'DrillSpace_Calibration_Report.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出校准报告 JSON');
+}
+
+function exportCalibrationErrorCsv(){
+  const report = state.calibrationReport || mockCalibrationReport();
+  const rows = report.rowErrors || [];
+  const cols = ['index','MD','TVD_err','NS_err','EW_err','DOGLEG_err','BUILD_err','TURN_err'];
+  const csv = [cols.join(',')].concat(rows.map(r => cols.map(c => r[c] ?? '').join(','))).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'DrillSpace_Calibration_Errors.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出误差 CSV');
+}
+
+window.renderCalibrationReportPage = renderCalibrationReportPage;
+window.loadCalibrationSample = loadCalibrationSample;
+window.loadCalibrationLatest = loadCalibrationLatest;
+window.openCalibrationCsvModal = openCalibrationCsvModal;
+window.exportCalibrationJson = exportCalibrationJson;
+window.exportCalibrationErrorCsv = exportCalibrationErrorCsv;
 
 
 async function testBackendHealth(){
@@ -1873,7 +2177,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.8.9 MyDrill DLL 对照校准版');
+  addLog('打开 DrillSpace V2.9.1.1 标准验收样本库修复版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();
@@ -1881,3 +2185,296 @@ function init(){
 }
 
 init();
+
+
+/* =========================================================
+   V2.9.1.1 Acceptance Sample Library Runtime Fix
+   强制补齐“加载样本库 / 标准验收样本库 / 运行样本”前端函数。
+   ========================================================= */
+function acceptanceSampleDefaults(){
+  return [
+    {id:'vertical_well',name:'01 直井样本',type:'Trajectory',level:'basic',desc:'验证零井斜、TVD=MD、横向位移接近零。',expectedVerdict:'PASS'},
+    {id:'j_well',name:'02 J形井样本',type:'Trajectory',level:'standard',desc:'直井段 + 增斜 + 稳斜，验证常规J形井。',expectedVerdict:'PASS'},
+    {id:'s_well',name:'03 S形井样本',type:'Trajectory',level:'standard',desc:'增斜、稳斜、降斜组合，验证Build/Turn连续性。',expectedVerdict:'PASS'},
+    {id:'horizontal_well',name:'04 水平井样本',type:'Trajectory',level:'standard',desc:'高井斜长水平段，验证累计TVD/NS/EW误差。',expectedVerdict:'PASS'},
+    {id:'high_dogleg',name:'05 大狗腿风险样本',type:'Risk',level:'review',desc:'局部井斜/方位变化较大，用于触发REVIEW。',expectedVerdict:'REVIEW'},
+    {id:'collision_nearby',name:'06 防碰近邻井样本',type:'Collision',level:'standard',desc:'当前井与邻井接近，后续用于防碰标准样本。',expectedVerdict:'PASS'}
+  ];
+}
+
+async function fetchBackendJson(path, options={}){
+  const base = (state.apiBaseUrl || 'http://127.0.0.1:8000').replace(/\/$/,'');
+  const resp = await fetch(base + path, options);
+  if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+  return await resp.json();
+}
+
+function localSampleReport(sampleId){
+  const sample = acceptanceSampleDefaults().find(s=>s.id===sampleId) || acceptanceSampleDefaults()[3];
+  const baseReport = (typeof mockCalibrationReport === 'function') ? mockCalibrationReport() : {ok:true,metrics:{},rowErrors:[],exceeded:{}};
+  const report = normalizeCalibrationReport(baseReport);
+  report.sample = sample;
+  report.sampleId = sample.id;
+  report.reference = `${sample.name} / frontend acceptance mock`;
+  report.sourceType = 'frontend_mock_acceptance_sample';
+  report.stationCount = sample.id === 'vertical_well' ? 13 : sample.id === 'horizontal_well' ? 56 : 32;
+  if(sample.id === 'high_dogleg'){
+    report.verdict = 'REVIEW';
+    report.metrics.DOGLEG = {count:report.stationCount,meanError:0,meanAbs:0.018,maxAbs:0.046,rmse:0.024};
+    report.metrics.BUILD = {count:report.stationCount,meanError:0,meanAbs:0.016,maxAbs:0.041,rmse:0.022};
+    report.metrics.TURN = {count:report.stationCount,meanError:0,meanAbs:0.014,maxAbs:0.036,rmse:0.020};
+    report.exceeded = {
+      DOGLEG:{maxAbs:0.046,tolerance:0.02},
+      BUILD:{maxAbs:0.041,tolerance:0.02},
+      TURN:{maxAbs:0.036,tolerance:0.02}
+    };
+  }else{
+    report.verdict = 'PASS';
+    report.exceeded = {};
+  }
+  report.note = `标准验收样本：${sample.name}。真实验收仍以旧 MyDrill 导出 CSV 为准。`;
+  return report;
+}
+
+function sampleLibraryHtml(){
+  const samples = state.acceptanceSamples || acceptanceSampleDefaults();
+  const active = state.activeAcceptanceSample || 'horizontal_well';
+  const current = samples.find(s=>s.id===active) || samples[3] || samples[0];
+  return `<section class="sample-library-v291">
+    <div class="sample-library-head">
+      <div>
+        <b>标准验收样本库 / Acceptance Sample Library</b>
+        <span>没有真实 MyDrill CSV 时，先用标准轨迹样本持续验证算法、报告页与导出链路；真实样本到位后直接替换。</span>
+      </div>
+      <div class="sample-library-actions">
+        <button onclick="loadAcceptanceSamples()">加载样本库</button>
+        <button onclick="generateAcceptanceSampleFiles()">生成样本文件</button>
+        <button onclick="exportAcceptanceSampleCsv('${active}','reference')">导出参考CSV</button>
+      </div>
+    </div>
+    <div class="sample-card-grid">
+      ${samples.map(s => `<button class="sample-card ${active===s.id?'active':''} ${s.level || ''}" onclick="selectAcceptanceSample('${s.id}')">
+        <b>${esc(s.name)}</b>
+        <span>${esc(s.desc || '')}</span>
+        <em>${esc(s.type || 'Trajectory')} · 预期 ${esc(s.expectedVerdict || 'PASS')}</em>
+      </button>`).join('')}
+    </div>
+    <div class="sample-runbar">
+      <span>当前样本：<b>${esc(current.name || active)}</b></span>
+      <button class="primary" onclick="runAcceptanceSample('${active}')">运行该样本对照</button>
+      <button onclick="applyAcceptanceSampleToTrajectory('${active}')">载入到轨迹表</button>
+      <button onclick="exportAcceptanceSampleCsv('${active}','input')">导出输入CSV</button>
+      <button onclick="exportAcceptanceSampleCsv('${active}','drillspace')">导出DrillSpace结果</button>
+    </div>
+  </section>`;
+}
+
+async function loadAcceptanceSamples(){
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/samples');
+      state.acceptanceSamples = json.data || json.samples || json || acceptanceSampleDefaults();
+      state.activeAcceptanceSample = state.activeAcceptanceSample || state.acceptanceSamples[3]?.id || 'horizontal_well';
+      toast('标准样本库已从后端加载');
+    }catch(err){
+      state.acceptanceSamples = acceptanceSampleDefaults();
+      state.activeAcceptanceSample = state.activeAcceptanceSample || 'horizontal_well';
+      toast(`后端样本库加载失败，使用前端默认样本：${err.message}`);
+    }
+  }else{
+    state.acceptanceSamples = acceptanceSampleDefaults();
+    state.activeAcceptanceSample = state.activeAcceptanceSample || 'horizontal_well';
+    toast('当前 MOCK 模式：已加载前端默认样本库');
+  }
+  renderCalibrationReportPage();
+}
+
+function selectAcceptanceSample(sampleId){
+  state.activeAcceptanceSample = sampleId;
+  state.calibrationReport = localSampleReport(sampleId);
+  state.calibrationSource = `selected sample:${sampleId}`;
+  renderCalibrationReportPage();
+  addLog(`选择标准验收样本：${sampleId}`);
+}
+
+async function runAcceptanceSample(sampleId){
+  state.activeAcceptanceSample = sampleId || state.activeAcceptanceSample || 'horizontal_well';
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson(`/api/well-path/samples/${state.activeAcceptanceSample}/calibrate`, {method:'POST'});
+      state.calibrationReport = normalizeCalibrationReport(json);
+      state.calibrationSource = `backend sample:${state.activeAcceptanceSample}`;
+      toast('后端标准样本对照完成');
+    }catch(err){
+      state.calibrationReport = localSampleReport(state.activeAcceptanceSample);
+      state.calibrationSource = `mock sample:${state.activeAcceptanceSample}`;
+      toast(`后端样本运行失败，使用前端Mock：${err.message}`);
+    }
+  }else{
+    state.calibrationReport = localSampleReport(state.activeAcceptanceSample);
+    state.calibrationSource = `mock sample:${state.activeAcceptanceSample}`;
+    toast('当前 MOCK 模式：标准样本对照完成');
+  }
+  renderCalibrationReportPage();
+  addLog(`运行标准验收样本对照：${state.activeAcceptanceSample}`);
+}
+
+async function applyAcceptanceSampleToTrajectory(sampleId){
+  state.activeAcceptanceSample = sampleId || state.activeAcceptanceSample || 'horizontal_well';
+  if(state.apiMode !== 'api'){
+    toast('载入轨迹表建议使用 API 模式。当前先运行样本报告。');
+    runAcceptanceSample(state.activeAcceptanceSample);
+    return;
+  }
+  try{
+    const json = await fetchBackendJson(`/api/well-path/samples/${state.activeAcceptanceSample}`);
+    const payload = json.data || json;
+    if(payload.inputRows && payload.inputRows.length){
+      state.rows = payload.inputRows.map(r => ({
+        type:r.type || '样本点',
+        md:num(r.md ?? r.MD),
+        inc:num(r.inc ?? r.INC),
+        azi:num(r.azi ?? r.AZI),
+        cl:0,tvd:0,ns:0,ew:0,vsec:0,dogleg:0,tf:0,build:0,turn:0,
+        remark:r.remark || state.activeAcceptanceSample
+      }));
+      recalcRowsLocal();
+      state.selectedRow = 0;
+      renderGrid();
+      updateSummary();
+      toast('样本已载入轨迹数据表');
+    }
+  }catch(err){
+    toast(`样本载入失败：${err.message}`);
+  }
+}
+
+function downloadTextFile(filename, text, type='text/plain;charset=utf-8'){
+  const blob = new Blob(['\uFEFF' + text], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportAcceptanceSampleCsv(sampleId, kind='reference'){
+  sampleId = sampleId || state.activeAcceptanceSample || 'horizontal_well';
+  if(state.apiMode === 'api'){
+    try{
+      const base = (state.apiBaseUrl || 'http://127.0.0.1:8000').replace(/\/$/,'');
+      const resp = await fetch(`${base}/api/well-path/samples/${sampleId}/csv?kind=${kind}`);
+      if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      const text = await resp.text();
+      downloadTextFile(`DrillSpace_${sampleId}_${kind}.csv`, text, 'text/csv;charset=utf-8');
+      toast(`已导出 ${sampleId} / ${kind} CSV`);
+      return;
+    }catch(err){
+      toast(`后端CSV导出失败，使用前端占位CSV：${err.message}`);
+    }
+  }
+  const sample = acceptanceSampleDefaults().find(s=>s.id===sampleId) || acceptanceSampleDefaults()[0];
+  const csv = `sample_id,name,type,expected\n${sample.id},${sample.name},${sample.type},${sample.expectedVerdict}\n`;
+  downloadTextFile(`DrillSpace_${sampleId}_${kind}_mock.csv`, csv, 'text/csv;charset=utf-8');
+}
+
+async function generateAcceptanceSampleFiles(){
+  if(state.apiMode !== 'api'){
+    toast('生成样本文件需要后端 API 模式。请先启动后端并切到 API。');
+    return;
+  }
+  try{
+    const json = await fetchBackendJson('/api/well-path/samples/generate-files', {method:'POST'});
+    const result = json.data || json;
+    toast(`样本文件已生成：${(result.written||[]).length} 个CSV`);
+    addLog('后端生成标准验收样本库文件');
+  }catch(err){
+    toast(`生成样本文件失败：${err.message}`);
+  }
+}
+
+function renderCalibrationReportPage(){
+  state.activeSubmodule = 'calibration';
+  state.editorView = 'calibration';
+  if(!state.acceptanceSamples) state.acceptanceSamples = acceptanceSampleDefaults();
+  if(!state.activeAcceptanceSample) state.activeAcceptanceSample = 'horizontal_well';
+
+  document.querySelectorAll('#subtabRow button').forEach(b => b.classList.toggle('active', b.dataset.module === 'calibration'));
+  const report = normalizeCalibrationReport(state.calibrationReport || localSampleReport(state.activeAcceptanceSample));
+  state.calibrationReport = report;
+
+  $('pageTitle').textContent = '算法校准 · 标准验收样本库与 MyDrill 对照报告';
+  $('pageSubtitle').textContent = '/Calibration/AcceptanceSamples：内置标准轨迹样本、MyDrill-like参考结果、后端最小曲率计算与逐列误差报告';
+  $('workbookTitle').textContent = '标准验收样本库 / Calibration Report';
+  $('rowCountLabel').textContent = `${report.stationCount || 0} stations · ${report.verdict || 'REVIEW'} · ${report.engine || 'FastAPI engine'}`;
+
+  const verdictClass = String(report.verdict || '').toUpperCase() === 'PASS' ? 'pass' : 'review';
+  const metricCols = ['TVD','NS','EW','DOGLEG','BUILD','TURN'];
+  const metricsHtml = metricCols.map(col => {
+    const m = report.metrics?.[col] || {};
+    const exceeded = report.exceeded && report.exceeded[col];
+    return `<div class="calib-metric ${exceeded?'review':'pass'}">
+      <span>${col} 最大误差</span>
+      <b>${fmt(m.maxAbs ?? 0, col==='DOGLEG'||col==='BUILD'||col==='TURN'?4:3)}</b>
+      <em>RMSE ${fmt(m.rmse ?? 0, col==='DOGLEG'||col==='BUILD'||col==='TURN'?4:3)} · N=${m.count || 0}</em>
+    </div>`;
+  }).join('');
+
+  $('editorContent').innerHTML = `<div class="submodule-content calibration-page-v290 calibration-page-v291">
+    <div class="calibration-head ${verdictClass}">
+      <div>
+        <b>标准验收样本库 + MyDrill 对照校准报告</b>
+        <span>先用标准样本保证“能跑、能验、能导出”，真实 MyDrill CSV 到位后直接替换参考结果。</span>
+      </div>
+      <div class="calibration-verdict">
+        <strong>${esc(report.verdict || 'REVIEW')}</strong>
+        <small>${esc(state.calibrationSource || 'acceptance sample')}</small>
+      </div>
+    </div>
+
+    <div class="calibration-actions">
+      <button class="primary" onclick="runAcceptanceSample(state.activeAcceptanceSample || 'horizontal_well')">运行当前样本</button>
+      <button onclick="loadAcceptanceSamples()">加载样本库</button>
+      <button onclick="loadCalibrationLatest()">读取最新报告</button>
+      <button onclick="openCalibrationCsvModal()">粘贴真实 MyDrill CSV</button>
+      <button onclick="exportCalibrationJson()">导出 JSON</button>
+      <button onclick="exportCalibrationErrorCsv()">导出误差 CSV</button>
+    </div>
+
+    ${sampleLibraryHtml()}
+
+    <div class="calibration-kpi-grid">
+      <div class="calib-kpi ${verdictClass}"><span>总体结论</span><b>${esc(report.verdict || 'REVIEW')}</b><em>PASS / REVIEW</em></div>
+      <div class="calib-kpi"><span>对照测点</span><b>${report.stationCount || 0}</b><em>station pairs</em></div>
+      <div class="calib-kpi"><span>当前样本</span><b>${esc(report.sample?.name || state.activeAcceptanceSample || 'sample')}</b><em>acceptance sample</em></div>
+      <div class="calib-kpi"><span>计算引擎</span><b>${esc(report.engine || 'FastAPI')}</b><em>current backend</em></div>
+    </div>
+
+    <div class="calibration-metrics-grid">${metricsHtml}</div>
+
+    <div class="calibration-main-grid">
+      <section class="calibration-chart-card">
+        <div class="calibration-card-title"><b>逐测点误差曲线</b><span>TVD / NS / EW / DLS / Build / Turn error by MD</span></div>
+        ${calibrationErrorSvg(report)}
+      </section>
+      <section class="calibration-side-card">
+        <div class="calibration-card-title"><b>样本说明与超差项</b><span>Acceptance sample notes / exceeded tolerance</span></div>
+        ${calibrationNotesHtml(report)}
+      </section>
+    </div>
+
+    <section class="calibration-table-card">
+      <div class="calibration-card-title"><b>逐测点误差表</b><span>前 500 行，运行不同样本后自动更新</span></div>
+      <div class="calibration-table-wrap">${calibrationErrorTable(report)}</div>
+    </section>
+  </div>`;
+  addLog(`打开标准验收样本库：${report.verdict || 'REVIEW'}`);
+}
+
+window.acceptanceSampleDefaults = acceptanceSampleDefaults;
+window.loadAcceptanceSamples = loadAcceptanceSamples;
+window.selectAcceptanceSample = selectAcceptanceSample;
+window.runAcceptanceSample = runAcceptanceSample;
+window.applyAcceptanceSampleToTrajectory = applyAcceptanceSampleToTrajectory;
+window.exportAcceptanceSampleCsv = exportAcceptanceSampleCsv;
+window.generateAcceptanceSampleFiles = generateAcceptanceSampleFiles;
+window.renderCalibrationReportPage = renderCalibrationReportPage;

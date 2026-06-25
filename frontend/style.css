@@ -1201,3 +1201,120 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
 .api-list div:has(span.call-mock){
   background:linear-gradient(90deg,rgba(124,58,237,.055),rgba(255,255,255,0));
 }
+
+
+
+/* =========================================================
+   DrillSpace V2.9.0 Calibration Report Page
+   ========================================================= */
+.calibration-page-v290{height:100%;overflow:auto;background:#f5f8fc;padding:8px;display:grid;gap:8px;grid-template-rows:auto auto auto auto minmax(320px,1fr) auto}
+.calibration-head{min-height:54px;border:1px solid #bdccdc;background:#fff;border-radius:3px;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;box-shadow:0 1px 4px rgba(9,35,66,.06)}
+.calibration-head b{display:block;font-size:16px;color:#10243f}.calibration-head span{display:block;margin-top:3px;font-size:11px;color:#6a7d92}.calibration-head.pass{border-left:4px solid #13a66f}.calibration-head.review{border-left:4px solid #d48a09}.calibration-head.mock{border-left:4px solid #7c5cff}.calibration-verdict{min-width:110px;text-align:center;border:1px solid #d1deeb;background:#f8fbff;border-radius:3px;padding:5px 10px}.calibration-verdict strong{font-size:20px;color:#0d55bd;display:block}.calibration-verdict small{font-size:10px;color:#6a7d92;font-weight:900}.calibration-actions{height:34px;border:1px solid #bdccdc;background:#fff;border-radius:3px;display:flex;align-items:center;gap:6px;padding:4px 7px;overflow-x:auto}.calibration-actions button{height:25px;border:1px solid #c4d2e1;background:#fff;border-radius:2px;font-weight:900;color:#213d5e;white-space:nowrap}.calibration-actions button.primary{background:#1d5fd0;border-color:#1d5fd0;color:#fff}.calibration-actions button:hover{background:#eef5ff;border-color:#9ebfe1}.calibration-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:7px}.calib-kpi{border:1px solid #c4d2e1;background:#fff;border-radius:3px;padding:8px 10px;border-left:3px solid #9fc2ef}.calib-kpi.pass{border-left-color:#13a66f}.calib-kpi.review{border-left-color:#d48a09}.calib-kpi.mock{border-left-color:#7c5cff}.calib-kpi span,.calib-metric span{display:block;font-size:10px;color:#6a7d92;font-weight:900;letter-spacing:.2px}.calib-kpi b{display:block;font-size:20px;line-height:24px;color:#10243f}.calib-kpi em,.calib-metric em{font-style:normal;font-size:10px;color:#6a7d92}.calibration-metrics-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:7px}.calib-metric{border:1px solid #c4d2e1;background:#fff;border-radius:3px;padding:7px 9px;border-top:3px solid #13a66f}.calib-metric.review{border-top-color:#d48a09}.calib-metric b{display:block;font-size:17px;line-height:21px;color:#10243f}.calibration-main-grid{min-height:340px;display:grid;grid-template-columns:minmax(520px,1fr) 310px;gap:8px}.calibration-chart-card,.calibration-side-card,.calibration-table-card{border:1px solid #c4d2e1;background:#fff;border-radius:3px;overflow:hidden;box-shadow:0 1px 4px rgba(9,35,66,.06)}.calibration-card-title{height:32px;border-bottom:1px solid #dce6f0;background:#f5f8fc;display:flex;align-items:center;gap:8px;padding:0 10px}.calibration-card-title b{font-size:12px;color:#10243f}.calibration-card-title span{font-size:10px;color:#6a7d92}.calibration-error-svg{width:100%;height:calc(100% - 32px);min-height:300px;display:block}.calibration-side-card{display:grid;grid-template-rows:32px 1fr}.calibration-note{margin:8px;border:1px solid #d6e1ec;background:#fbfdff;border-radius:3px;padding:8px;border-left:3px solid #9fc2ef}.calibration-note.pass{border-left-color:#13a66f}.calibration-note.review{border-left-color:#d48a09}.calibration-note b{display:block;font-size:12px;color:#10243f;margin-bottom:4px}.calibration-note span{font-size:11px;color:#5d7189;line-height:1.5}.calibration-table-card{min-height:240px;display:grid;grid-template-rows:32px minmax(0,1fr)}.calibration-table-wrap{overflow:auto}.calibration-table{width:100%;border-collapse:collapse;font-size:12px}.calibration-table th{position:sticky;top:0;background:#edf4fb;border:1px solid #d2deec;height:27px;color:#263e5e}.calibration-table td{border:1px solid #e3edf6;height:24px;text-align:center;background:#fff}.calibration-table tr:nth-child(even) td{background:#fbfdff}.calibration-empty{padding:24px;color:#6a7d92;font-weight:900;text-align:center}.command-ribbon button[data-module="calibration"]{border-top-color:#7c5cff !important}.command-ribbon button[data-module="calibration"].active{border-top-color:#1d5fd0 !important;background:#eef5ff !important}
+@media(max-width:1500px){.calibration-metrics-grid{grid-template-columns:repeat(3,1fr)}.calibration-main-grid{grid-template-columns:1fr}.calibration-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+
+
+/* =========================================================
+   DrillSpace V2.9.1 Acceptance Sample Library
+   标准验收样本库：高信息密度、不收敛、不减内容。
+   ========================================================= */
+.sample-library-v291{
+  border:1px solid #c4d2e1;
+  background:#fbfdff;
+  border-radius:3px;
+  padding:8px;
+  display:grid;
+  gap:8px;
+  box-shadow:0 1px 5px rgba(15,52,92,.055);
+}
+.sample-library-head{
+  min-height:34px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid #e3edf6;
+  padding-bottom:7px;
+}
+.sample-library-head b{font-size:13px;color:#10243f}
+.sample-library-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.sample-library-actions{display:flex;gap:5px;white-space:nowrap}
+.sample-library-actions button,
+.sample-runbar button{
+  height:26px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  font-weight:850;
+  color:#263f5f;
+  padding:0 9px;
+}
+.sample-library-actions button:hover,
+.sample-runbar button:hover{background:#eef5ff;border-color:#9ebfe1}
+.sample-card-grid{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(120px,1fr));
+  gap:6px;
+}
+.sample-card{
+  min-height:82px;
+  text-align:left;
+  border:1px solid #cbd8e7;
+  border-top:3px solid #9fc2ef;
+  background:#fff;
+  border-radius:3px;
+  padding:7px 8px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:4px;
+}
+.sample-card b{font-size:12px;color:#10243f}
+.sample-card span{font-size:10px;color:#65798f;line-height:1.35}
+.sample-card em{font-style:normal;font-size:9px;color:#50627a;font-weight:850}
+.sample-card.standard{border-top-color:#9fc2ef}
+.sample-card.basic{border-top-color:#9fdcc1}
+.sample-card.review{border-top-color:#f0aaa8}
+.sample-card.active{
+  background:#eef5ff;
+  border-color:#9ebfe1;
+  box-shadow:inset 0 0 0 1px rgba(29,95,208,.12);
+}
+.sample-runbar{
+  min-height:32px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  border-top:1px solid #e3edf6;
+  padding-top:7px;
+  flex-wrap:wrap;
+}
+.sample-runbar span{
+  margin-right:auto;
+  color:#50627a;
+  font-size:12px;
+}
+.sample-runbar span b{color:#10243f}
+.sample-runbar .primary{
+  background:#1d5fd0;
+  border-color:#1d5fd0;
+  color:#fff;
+}
+@media(max-width:1500px){
+  .sample-card-grid{grid-template-columns:repeat(3,minmax(140px,1fr))}
+  .sample-library-head{display:grid}
+}
+
+/* V2.9.1.1 Acceptance Sample Library Runtime Fix */
+.sample-library-v291{border:1px solid #c4d2e1;background:#fbfdff;border-radius:3px;padding:8px;display:grid;gap:8px;box-shadow:0 1px 5px rgba(15,52,92,.055)}
+.sample-library-head{min-height:34px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #e3edf6;padding-bottom:7px}
+.sample-library-head b{font-size:13px;color:#10243f}.sample-library-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.sample-library-actions{display:flex;gap:5px;white-space:nowrap}
+.sample-library-actions button,.sample-runbar button{height:26px;border:1px solid #c7d5e4;background:#fff;border-radius:2px;font-weight:850;color:#263f5f;padding:0 9px}
+.sample-library-actions button:hover,.sample-runbar button:hover{background:#eef5ff;border-color:#9ebfe1}
+.sample-card-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:6px}
+.sample-card{min-height:82px;text-align:left;border:1px solid #cbd8e7;border-top:3px solid #9fc2ef;background:#fff;border-radius:3px;padding:7px 8px;display:grid;grid-template-rows:auto 1fr auto;gap:4px}
+.sample-card b{font-size:12px;color:#10243f}.sample-card span{font-size:10px;color:#65798f;line-height:1.35}.sample-card em{font-style:normal;font-size:9px;color:#50627a;font-weight:850}
+.sample-card.basic{border-top-color:#9fdcc1}.sample-card.standard{border-top-color:#9fc2ef}.sample-card.review{border-top-color:#f0aaa8}
+.sample-card.active{background:#eef5ff;border-color:#9ebfe1;box-shadow:inset 0 0 0 1px rgba(29,95,208,.12)}
+.sample-runbar{min-height:32px;display:flex;align-items:center;gap:7px;border-top:1px solid #e3edf6;padding-top:7px;flex-wrap:wrap}
+.sample-runbar span{margin-right:auto;color:#50627a;font-size:12px}.sample-runbar span b{color:#10243f}.sample-runbar .primary{background:#1d5fd0;border-color:#1d5fd0;color:#fff}
+@media(max-width:1500px){.sample-card-grid{grid-template-columns:repeat(3,minmax(140px,1fr))}.sample-library-head{display:grid}}

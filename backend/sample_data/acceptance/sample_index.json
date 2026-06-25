@@ -1,0 +1,50 @@
+[
+  {
+    "id": "vertical_well",
+    "name": "01 直井样本",
+    "type": "Trajectory",
+    "level": "basic",
+    "desc": "用于验证零井斜、垂深等于测深、横向位移接近零的基础链路。",
+    "expectedVerdict": "PASS"
+  },
+  {
+    "id": "j_well",
+    "name": "02 J形井样本",
+    "type": "Trajectory",
+    "level": "standard",
+    "desc": "直井段 + 一段增斜 + 稳斜段，用于验证常规J形井轨迹计算。",
+    "expectedVerdict": "PASS"
+  },
+  {
+    "id": "s_well",
+    "name": "03 S形井样本",
+    "type": "Trajectory",
+    "level": "standard",
+    "desc": "增斜、稳斜、降斜组合，用于验证Build/Turn和DLS连续性。",
+    "expectedVerdict": "PASS"
+  },
+  {
+    "id": "horizontal_well",
+    "name": "04 水平井样本",
+    "type": "Trajectory",
+    "level": "standard",
+    "desc": "高井斜水平井样本，用于验证长水平段TVD/NS/EW累计误差。",
+    "expectedVerdict": "PASS"
+  },
+  {
+    "id": "high_dogleg",
+    "name": "05 大狗腿风险样本",
+    "type": "Risk",
+    "level": "review",
+    "desc": "局部井斜/方位变化较大，用于触发DLS/Build/Turn审查。",
+    "expectedVerdict": "REVIEW"
+  },
+  {
+    "id": "collision_nearby",
+    "name": "06 防碰近邻井样本",
+    "type": "Collision",
+    "level": "standard",
+    "desc": "当前井与邻井接近的轨迹样本，用于后续防碰扫描验收联动。",
+    "expectedVerdict": "PASS"
+  }
+]

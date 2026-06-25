@@ -1,8 +1,9 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
+from app.services.acceptance_samples import calibrate_sample, list_samples, sample_csv, sample_payload, write_sample_files
 
 router = APIRouter()
 
@@ -193,3 +194,53 @@ def calibration_compare_csv(payload: Dict[str, Any] = Body(default={})):
 @router.get("/api/well-path/calibration/sample-csv")
 def calibration_sample_csv():
     return {"csv": rows_to_csv(sample_reference_rows())}
+
+
+
+
+
+@router.get("/api/well-path/samples")
+def acceptance_sample_list():
+    return data(list_samples())
+
+@router.get("/api/well-path/samples/{sample_id}")
+def acceptance_sample_detail(sample_id: str):
+    return data(sample_payload(sample_id))
+
+@router.post("/api/well-path/samples/{sample_id}/calibrate")
+def acceptance_sample_calibrate(sample_id: str):
+    return data(calibrate_sample(sample_id, save_dir="data/calibration"))
+
+@router.get("/api/well-path/samples/{sample_id}/csv")
+def acceptance_sample_csv(sample_id: str, kind: str = "reference"):
+    text = sample_csv(sample_id, kind=kind)
+    filename = f"{sample_id}_{kind}.csv"
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.post("/api/well-path/samples/generate-files")
+def acceptance_sample_generate_files():
+    return data(write_sample_files("sample_data/acceptance"))
+
+@router.get("/api/well-path/calibration/latest")
+def calibration_latest():
+    import glob
+    import json
+    import os
+    candidates = []
+    candidates.extend(glob.glob("data/calibration/mydrill_alignment_report_*.json"))
+    candidates.extend(glob.glob("data/calibration/*alignment_report*.json"))
+    candidates.extend(glob.glob("data/calibration/report.json"))
+    candidates.extend(glob.glob("data/calibration/last_alignment_report.json"))
+    candidates = [p for p in candidates if os.path.isfile(p)]
+    if not candidates:
+        rows = sample_reference_rows()
+        return data(compare_reference(rows, save_dir="data/calibration"))
+    latest = max(candidates, key=lambda p: os.path.getmtime(p))
+    with open(latest, "r", encoding="utf-8") as f:
+        report = json.load(f)
+    report["loadedReport"] = latest
+    return data(report)
