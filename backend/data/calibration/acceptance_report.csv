@@ -1,0 +1,7 @@
+﻿sampleId,name,type,expectedVerdict,actualVerdict,stationCount,TVD_maxAbs,NS_maxAbs,EW_maxAbs,DOGLEG_maxAbs,BUILD_maxAbs,TURN_maxAbs,recommendation
+vertical_well,01 直井样本,Trajectory,PASS,PASS,13,0.017917,0.019883,0.019991,0.005985,0.00495,0.00399,通过
+j_well,02 J形井样本,Trajectory,PASS,PASS,37,0.018,0.019989,0.019991,0.006,0.004994,0.003997,通过
+s_well,03 S形井样本,Trajectory,PASS,PASS,38,0.018,0.019989,0.019991,0.006,0.004994,0.003997,通过
+horizontal_well,04 水平井样本,Trajectory,PASS,PASS,57,0.018,0.019989,0.02,0.006,0.004996,0.004,通过
+high_dogleg,05 大狗腿风险样本,Risk,REVIEW,REVIEW,40,0.089999,0.109939,0.099957,0.045,0.03995,0.034975,复核高狗腿/局部曲率或替换真实MyDrill样本
+collision_nearby,06 防碰近邻井样本,Collision,PASS,PASS,53,0.018,0.019989,0.019991,0.006,0.004996,0.004,通过

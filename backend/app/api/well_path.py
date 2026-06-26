@@ -1,9 +1,9 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body, Response
+from fastapi import APIRouter, Body, Response, Response, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
-from app.services.acceptance_samples import calibrate_sample, list_samples, sample_csv, sample_payload, write_sample_files
+from app.services.acceptance_samples import calibrate_sample, list_samples, sample_csv, sample_payload, write_sample_files, acceptance_report_csv, batch_acceptance_report, latest_batch_acceptance_report
 
 router = APIRouter()
 
@@ -205,6 +205,8 @@ def acceptance_sample_list():
 
 @router.get("/api/well-path/samples/{sample_id}")
 def acceptance_sample_detail(sample_id: str):
+    if sample_id == 'acceptance-report':
+        return data(latest_batch_acceptance_report('data/calibration/acceptance_report.json'))
     return data(sample_payload(sample_id))
 
 @router.post("/api/well-path/samples/{sample_id}/calibrate")
@@ -244,3 +246,44 @@ def calibration_latest():
         report = json.load(f)
     report["loadedReport"] = latest
     return data(report)
+
+
+
+@router.post("/api/well-path/samples/run-all")
+def acceptance_sample_run_all():
+    return data(batch_acceptance_report("data/calibration"))
+
+@router.get("/api/well-path/samples/acceptance-report")
+def acceptance_sample_acceptance_report():
+    return data(latest_batch_acceptance_report("data/calibration/acceptance_report.json"))
+
+@router.get("/api/well-path/samples/acceptance-report.csv")
+def acceptance_sample_acceptance_report_csv():
+    report = latest_batch_acceptance_report("data/calibration/acceptance_report.json")
+    text = acceptance_report_csv(report)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_acceptance_report.csv"}
+    )
+
+
+
+# V2.9.2.2 stable aliases: avoid conflict with /api/well-path/samples/{sample_id}
+@router.post("/api/well-path/batch-run-all")
+def acceptance_batch_run_all_alias():
+    return data(batch_acceptance_report("data/calibration"))
+
+@router.get("/api/well-path/batch-acceptance-report")
+def acceptance_batch_report_alias():
+    return data(latest_batch_acceptance_report("data/calibration/acceptance_report.json"))
+
+@router.get("/api/well-path/batch-acceptance-report.csv")
+def acceptance_batch_report_csv_alias():
+    report = latest_batch_acceptance_report("data/calibration/acceptance_report.json")
+    text = acceptance_report_csv(report)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_acceptance_report.csv"}
+    )

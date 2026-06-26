@@ -1318,3 +1318,58 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
 .sample-runbar{min-height:32px;display:flex;align-items:center;gap:7px;border-top:1px solid #e3edf6;padding-top:7px;flex-wrap:wrap}
 .sample-runbar span{margin-right:auto;color:#50627a;font-size:12px}.sample-runbar span b{color:#10243f}.sample-runbar .primary{background:#1d5fd0;border-color:#1d5fd0;color:#fff}
 @media(max-width:1500px){.sample-card-grid{grid-template-columns:repeat(3,minmax(140px,1fr))}.sample-library-head{display:grid}}
+
+
+/* =========================================================
+   DrillSpace V2.9.2 Batch Acceptance Report
+   批量验收总报告工业面板
+   ========================================================= */
+.batch-acceptance-v292{border:1px solid #bdccdc;background:#fbfdff;border-radius:3px;display:grid;gap:8px;padding:8px;box-shadow:0 1px 6px rgba(15,52,92,.06)}
+.batch-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e1eaf3;padding-bottom:8px}
+.batch-head b{font-size:14px;color:#10243f}.batch-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.batch-head.pass{box-shadow:inset 3px 0 0 #13a66f;padding-left:8px}.batch-head.review{box-shadow:inset 3px 0 0 #d48a09;padding-left:8px}
+.batch-verdict{min-width:170px;border:1px solid #c8d6e6;background:#fff;padding:7px 10px;text-align:right}
+.batch-verdict strong{display:block;font-size:22px;color:#0d55bd;line-height:24px}.batch-verdict small{font-size:10px;color:#6a7d92}
+.batch-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.batch-actions button{height:28px;border:1px solid #c7d5e4;background:#fff;border-radius:2px;font-weight:850;color:#263f5f;padding:0 10px}
+.batch-actions .primary{background:#1d5fd0;color:#fff;border-color:#1d5fd0}
+.batch-kpi-grid{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:6px}
+.batch-kpi{border:1px solid #cbd8e7;border-top:3px solid #9fc2ef;background:#fff;padding:8px 10px;min-height:58px}
+.batch-kpi.pass{border-top-color:#13a66f}.batch-kpi.review{border-top-color:#d48a09}
+.batch-kpi span{display:block;font-size:10px;color:#6a7d92;font-weight:850}.batch-kpi b{display:block;font-size:21px;color:#10243f;line-height:24px}.batch-kpi em{font-style:normal;font-size:9px;color:#6a7d92}
+.batch-error-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.batch-error-grid div{border:1px solid #d4e0ec;background:#fff;padding:6px 8px;border-left:2px solid #9fc2ef}
+.batch-error-grid span{display:block;font-size:10px;color:#6a7d92}.batch-error-grid b{display:block;font-size:16px;color:#10243f}
+.batch-table-wrap{max-height:250px;overflow:auto;border:1px solid #d4e0ec;background:#fff}
+.batch-table{width:100%;border-collapse:collapse;font-size:11px}
+.batch-table th{position:sticky;top:0;background:#edf4fb;border:1px solid #d5e1ee;height:28px;color:#263e5e}
+.batch-table td{border:1px solid #e3edf6;height:26px;text-align:center;padding:0 5px}
+.batch-table td:nth-child(2),.batch-table td:last-child{text-align:left}
+.batch-table .row-pass td{background:#fbfffd}.batch-table .row-review td{background:#fffaf1}
+@media(max-width:1500px){.batch-kpi-grid{grid-template-columns:repeat(3,1fr)}.batch-error-grid{grid-template-columns:repeat(3,1fr)}}
+
+
+/* V2.9.2.1 Batch Acceptance Button Fix */
+.batch-acceptance-v292{border:1px solid #bdccdc;background:#fbfdff;border-radius:3px;display:grid;gap:8px;padding:8px;margin:8px 0;box-shadow:0 1px 6px rgba(15,52,92,.06)}
+.batch-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e1eaf3;padding-bottom:8px}
+.batch-head b{font-size:14px;color:#10243f}.batch-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.batch-head.pass{box-shadow:inset 3px 0 0 #13a66f;padding-left:8px}.batch-head.review{box-shadow:inset 3px 0 0 #d48a09;padding-left:8px}
+.batch-verdict{min-width:170px;border:1px solid #c8d6e6;background:#fff;padding:7px 10px;text-align:right}
+.batch-verdict strong{display:block;font-size:22px;color:#0d55bd;line-height:24px}.batch-verdict small{font-size:10px;color:#6a7d92}
+.batch-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.batch-actions button{height:28px;border:1px solid #c7d5e4;background:#fff;border-radius:2px;font-weight:850;color:#263f5f;padding:0 10px}
+.batch-actions .primary{background:#1d5fd0;color:#fff;border-color:#1d5fd0}
+.batch-kpi-grid{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:6px}
+.batch-kpi{border:1px solid #cbd8e7;border-top:3px solid #9fc2ef;background:#fff;padding:8px 10px;min-height:58px}
+.batch-kpi.pass{border-top-color:#13a66f}.batch-kpi.review{border-top-color:#d48a09}
+.batch-kpi span{display:block;font-size:10px;color:#6a7d92;font-weight:850}.batch-kpi b{display:block;font-size:21px;color:#10243f;line-height:24px}.batch-kpi em{font-style:normal;font-size:9px;color:#6a7d92}
+.batch-error-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.batch-error-grid div{border:1px solid #d4e0ec;background:#fff;padding:6px 8px;border-left:2px solid #9fc2ef}
+.batch-error-grid span{display:block;font-size:10px;color:#6a7d92}.batch-error-grid b{display:block;font-size:16px;color:#10243f}
+.batch-table-wrap{max-height:250px;overflow:auto;border:1px solid #d4e0ec;background:#fff}
+.batch-table{width:100%;border-collapse:collapse;font-size:11px}
+.batch-table th{position:sticky;top:0;background:#edf4fb;border:1px solid #d5e1ee;height:28px;color:#263e5e}
+.batch-table td{border:1px solid #e3edf6;height:26px;text-align:center;padding:0 5px}
+.batch-table td:nth-child(2),.batch-table td:last-child{text-align:left}
+.batch-table .row-pass td{background:#fbfffd}.batch-table .row-review td{background:#fffaf1}
+@media(max-width:1500px){.batch-kpi-grid{grid-template-columns:repeat(3,1fr)}.batch-error-grid{grid-template-columns:repeat(3,1fr)}}

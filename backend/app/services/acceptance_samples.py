@@ -248,3 +248,94 @@ def write_sample_files(output_dir: str = "sample_data/acceptance") -> Dict[str, 
     with open(index_path, "w", encoding="utf-8") as f:
         json.dump(SAMPLE_META, f, ensure_ascii=False, indent=2)
     return {"ok": True, "written": written, "reports": reports, "index": index_path}
+
+
+
+def _metric_max(report: Dict[str, Any], col: str) -> float:
+    try:
+        return float(report.get("metrics", {}).get(col, {}).get("maxAbs", 0.0))
+    except Exception:
+        return 0.0
+
+def _metric_rmse(report: Dict[str, Any], col: str) -> float:
+    try:
+        return float(report.get("metrics", {}).get(col, {}).get("rmse", 0.0))
+    except Exception:
+        return 0.0
+
+def batch_acceptance_report(save_dir: str = "data/calibration") -> Dict[str, Any]:
+    os.makedirs(save_dir, exist_ok=True)
+    reports: List[Dict[str, Any]] = []
+    for meta in SAMPLE_META:
+        report = calibrate_sample(meta["id"], save_dir=save_dir)
+        reports.append(report)
+
+    pass_count = sum(1 for r in reports if str(r.get("verdict", "")).upper() == "PASS")
+    review_count = sum(1 for r in reports if str(r.get("verdict", "")).upper() == "REVIEW")
+    fail_count = sum(1 for r in reports if str(r.get("verdict", "")).upper() == "FAILED")
+    total = len(reports)
+    cols = ["TVD", "NS", "EW", "DOGLEG", "BUILD", "TURN"]
+    max_errors = {c: max([_metric_max(r, c) for r in reports] or [0.0]) for c in cols}
+    max_rmse = {c: max([_metric_rmse(r, c) for r in reports] or [0.0]) for c in cols}
+
+    sample_rows: List[Dict[str, Any]] = []
+    for r in reports:
+        sample = r.get("sample", {})
+        sample_rows.append({
+            "sampleId": r.get("sampleId", sample.get("id", "")),
+            "name": sample.get("name", r.get("sampleId", "")),
+            "type": sample.get("type", "Trajectory"),
+            "level": sample.get("level", ""),
+            "expectedVerdict": sample.get("expectedVerdict", "PASS"),
+            "actualVerdict": r.get("verdict", "REVIEW"),
+            "stationCount": r.get("stationCount", 0),
+            "TVD_maxAbs": _metric_max(r, "TVD"),
+            "NS_maxAbs": _metric_max(r, "NS"),
+            "EW_maxAbs": _metric_max(r, "EW"),
+            "DOGLEG_maxAbs": _metric_max(r, "DOGLEG"),
+            "BUILD_maxAbs": _metric_max(r, "BUILD"),
+            "TURN_maxAbs": _metric_max(r, "TURN"),
+            "recommendation": "通过" if str(r.get("verdict", "")).upper() == "PASS" else "复核高狗腿/局部曲率或替换真实MyDrill样本",
+        })
+
+    overall = "PASS" if fail_count == 0 and review_count <= 1 and pass_count >= max(1, total - 1) else "REVIEW"
+    summary = {
+        "ok": True,
+        "version": "2.9.2",
+        "reportType": "BatchAcceptanceReport",
+        "overallVerdict": overall,
+        "totalSamples": total,
+        "passCount": pass_count,
+        "reviewCount": review_count,
+        "failCount": fail_count,
+        "acceptanceRate": round(pass_count / max(1, total), 4),
+        "maxErrors": max_errors,
+        "maxRmse": max_rmse,
+        "samples": sample_rows,
+        "reports": reports,
+        "generatedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "note": "V2.9.2 batch report runs all built-in acceptance samples. The high-dogleg case may intentionally remain REVIEW to validate review workflow.",
+    }
+    report_path = os.path.join(save_dir, "acceptance_report.json")
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, ensure_ascii=False, indent=2)
+    summary["savedReport"] = report_path
+    return summary
+
+def acceptance_report_csv(report: Dict[str, Any]) -> str:
+    buf = io.StringIO()
+    fieldnames = [
+        "sampleId", "name", "type", "expectedVerdict", "actualVerdict", "stationCount",
+        "TVD_maxAbs", "NS_maxAbs", "EW_maxAbs", "DOGLEG_maxAbs", "BUILD_maxAbs", "TURN_maxAbs", "recommendation"
+    ]
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, lineterminator="\n")
+    writer.writeheader()
+    for row in report.get("samples", []):
+        writer.writerow({k: row.get(k, "") for k in fieldnames})
+    return buf.getvalue()
+
+def latest_batch_acceptance_report(path: str = "data/calibration/acceptance_report.json") -> Dict[str, Any]:
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return batch_acceptance_report(os.path.dirname(path) or "data/calibration")
