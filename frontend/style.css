@@ -1420,3 +1420,285 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
 .stage-file-list{border:1px solid #d4e0ec;background:#fff;padding:8px;display:grid;gap:4px}
 .stage-file-list>b{font-size:12px;color:#10243f;margin-bottom:2px}.stage-file-list div{display:grid;grid-template-columns:170px 1fr;gap:8px;border-top:1px solid #edf3fa;padding-top:4px;font-size:11px}.stage-file-list span{color:#50627a}.stage-file-list code{color:#0d55bd;font-family:Consolas,monospace}
 @media(max-width:1500px){.stage-kpi-grid{grid-template-columns:repeat(3,1fr)}.stage-lines-grid{grid-template-columns:1fr}.stage-status-grid{grid-template-columns:repeat(2,1fr)}}
+
+
+/* =========================================================
+   DrillSpace V2.9.5 Compass Planning Methods Fusion
+   轨迹规划方法库融合：吸收 Compass 功能内容，保持 DrillSpace 风格。
+   ========================================================= */
+.editor-content.v295-plan-editor{
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) 286px !important;
+  gap:6px;
+  overflow:hidden !important;
+  background:#f5f8fc;
+}
+.editor-content.v295-plan-editor .sheet-wrap{
+  min-height:0;
+  height:auto !important;
+  border-bottom:1px solid #cbd8e7;
+}
+.v295-planning-dock{
+  min-height:0;
+  border:1px solid #b9c9db;
+  background:#fbfdff;
+  border-radius:3px;
+  display:grid;
+  grid-template-rows:34px 35px minmax(0,1fr) 38px;
+  gap:6px;
+  padding:6px;
+  box-shadow:0 1px 6px rgba(15,52,92,.06);
+  overflow:hidden;
+}
+.v295-dock-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid #e3edf6;
+  padding:0 4px 5px;
+}
+.v295-dock-head b{
+  font-size:13px;
+  color:#10243f;
+}
+.v295-dock-head span{
+  display:block;
+  font-size:10px;
+  color:#6a7d92;
+  margin-top:2px;
+}
+.v295-dock-status{
+  min-width:220px;
+  border:1px solid #cbd8e7;
+  background:#fff;
+  padding:5px 8px;
+  text-align:right;
+}
+.v295-dock-status b{
+  color:#0d55bd;
+}
+.v295-method-tabs{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(90px,1fr));
+  gap:4px;
+}
+.v295-method-tabs button{
+  height:31px;
+  border:1px solid #c7d5e4;
+  border-top:3px solid #dbe6f2;
+  background:#fff;
+  border-radius:2px;
+  color:#263f5f;
+  display:grid;
+  grid-template-rows:14px 10px;
+  align-content:center;
+  text-align:center;
+}
+.v295-method-tabs button b{
+  font-size:11px;
+}
+.v295-method-tabs button span{
+  font-size:9px;
+  color:#6a7d92;
+}
+.v295-method-tabs button.active{
+  background:#eef5ff;
+  border-color:#9ebfe1;
+  border-top-color:#1d5fd0;
+  color:#0d55bd;
+}
+.v295-planning-body{
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(430px,1.35fr) minmax(330px,.95fr) minmax(260px,.75fr);
+  gap:6px;
+  overflow:hidden;
+}
+.v295-param-panel,.v295-target-panel,.v295-preview-panel{
+  border:1px solid #d2deea;
+  background:#fff;
+  border-radius:2px;
+  overflow:auto;
+  padding:7px;
+}
+.v295-card-title{
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid #edf3fa;
+  margin-bottom:6px;
+}
+.v295-card-title b{
+  font-size:12px;
+  color:#10243f;
+}
+.v295-card-title span{
+  font-size:9px;
+  color:#6a7d92;
+}
+.v295-form-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(72px,1fr));
+  gap:6px;
+  align-items:start;
+}
+.v295-form-grid.dogleg{
+  grid-template-columns:repeat(4,minmax(72px,1fr));
+}
+.v295-form-grid.nudge{
+  grid-template-columns:repeat(5,minmax(70px,1fr));
+}
+.v295-field{
+  display:grid;
+  gap:2px;
+  font-size:10px;
+  color:#50627a;
+  font-weight:850;
+}
+.v295-field span{
+  white-space:nowrap;
+}
+.v295-field em{
+  font-style:normal;
+  font-size:8px;
+  color:#8091a4;
+  margin-left:3px;
+}
+.v295-field input,.v295-field select{
+  height:24px;
+  border:1px solid #cbd8e7;
+  border-radius:2px;
+  background:#fff;
+  padding:0 6px;
+  color:#10243f;
+  font-size:11px;
+  min-width:0;
+}
+.v295-section-types{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:6px;
+}
+.v295-section-types b{
+  flex:0 0 82px;
+  font-size:11px;
+  color:#10243f;
+}
+.v295-section-types button{
+  height:23px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  color:#263f5f;
+  font-size:10px;
+  padding:0 7px;
+}
+.v295-section-types button.active{
+  background:#eef5ff;
+  border-color:#1d5fd0;
+  color:#0d55bd;
+  box-shadow:inset 0 2px 0 #1d5fd0;
+}
+.v295-target-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+.v295-unknowns,.v295-note{
+  grid-column:span 2;
+  border:1px dashed #cbd8e7;
+  background:#f8fbff;
+  padding:6px;
+  min-height:46px;
+}
+.v295-unknowns b,.v295-note b{
+  display:block;
+  font-size:11px;
+  color:#0d55bd;
+}
+.v295-unknowns span,.v295-note span{
+  display:block;
+  font-size:10px;
+  color:#6a7d92;
+  margin-top:3px;
+  line-height:1.35;
+}
+.v295-preview{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:5px;
+}
+.v295-preview div{
+  border:1px solid #d4e0ec;
+  background:#f8fbff;
+  padding:5px 6px;
+  min-height:42px;
+}
+.v295-preview span{
+  display:block;
+  font-size:9px;
+  color:#6a7d92;
+}
+.v295-preview b{
+  display:block;
+  font-size:14px;
+  color:#10243f;
+  margin-top:2px;
+}
+.v295-preview.empty{
+  display:block;
+  border:1px dashed #cbd8e7;
+  background:#f8fbff;
+  padding:10px;
+  color:#6a7d92;
+  min-height:80px;
+}
+.v295-preview.empty b{
+  display:block;
+  font-size:12px;
+  color:#10243f;
+  margin-bottom:5px;
+}
+.v295-bottom-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  border-top:1px solid #e3edf6;
+  padding-top:5px;
+}
+.v295-bottom-actions button,.v295-tool-btn{
+  height:27px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  color:#263f5f;
+  font-weight:850;
+  padding:0 10px;
+}
+.v295-bottom-actions button.primary{
+  background:#1d5fd0;
+  border-color:#1d5fd0;
+  color:#fff;
+}
+.v295-tool-btn{
+  margin-top:6px;
+}
+.v295-auto{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:11px;
+  color:#50627a;
+  font-weight:850;
+}
+@media(max-width:1500px){
+  .editor-content.v295-plan-editor{grid-template-rows:minmax(0,1fr) 305px !important}
+  .v295-method-tabs{grid-template-columns:repeat(4,minmax(90px,1fr))}
+  .v295-planning-body{grid-template-columns:1fr;overflow:auto}
+  .v295-form-grid,.v295-form-grid.dogleg,.v295-form-grid.nudge{grid-template-columns:repeat(3,1fr)}
+}

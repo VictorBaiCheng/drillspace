@@ -1,4 +1,4 @@
-/* DrillSpace V2.9.4 Trajectory Subsystem Acceptance Center
+/* DrillSpace V2.9.5 Compass Planning Methods Fusion
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -1693,7 +1693,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.9.4-A5123');
+  addLog('保存轨迹版本 V2.9.5-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -2193,7 +2193,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.9.4 轨迹子系统阶段验收中心版');
+  addLog('打开 DrillSpace V2.9.5 轨迹规划方法库融合版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();
@@ -2802,3 +2802,126 @@ window.loadCollisionAcceptanceReport = loadCollisionAcceptanceReport;
 window.runCollisionAcceptanceSample = runCollisionAcceptanceSample;
 window.exportCollisionAcceptanceJson = exportCollisionAcceptanceJson;
 window.exportCollisionAcceptanceCsv = exportCollisionAcceptanceCsv;
+
+
+/* =========================================================
+   V2.9.5 Compass Planning Methods Runtime
+   吸收 Compass Plan Editor 功能内容，不复制老旧界面。
+   新增 Slant / S Well / Build Turn / Dogleg Toolface / Hold / Optimum Align / Nudge。
+   ========================================================= */
+function v295PlanningMethods(){
+  return [
+    {id:'slant', label:'Slant', cn:'斜井段', desc:'1st Hold + Build + Max Angle + 2nd Hold'},
+    {id:'sWell', label:'S Well', cn:'S形井', desc:'增斜 / 稳斜 / 降斜 / Final Hold'},
+    {id:'buildTurn', label:'Build Turn', cn:'造斜转向', desc:'Build + Turn 同步推进'},
+    {id:'doglegToolface', label:'Dogleg Toolface', cn:'狗腿工具面', desc:'DLS / TFO / Const-TFO'},
+    {id:'hold', label:'Hold', cn:'稳斜保持', desc:'Hold to CL / MD / TVD / V.Sec'},
+    {id:'optimumAlign', label:'Optimum Align', cn:'最优对准', desc:'Curve-Hold-Curve / Target Align'},
+    {id:'nudge', label:'Nudge', cn:'微调段', desc:'MD/INC/AZI 与目标线微调'}
+  ];
+}
+function v295SectionTypes(){
+  return [['incAziMd','Inc Azi MD'],['tvdIncAzi','TVD Inc Azi'],['dlsIncAzi','DLS Inc Azi'],['mdDlsAziHigh','MD DLS AZI (H)'],['mdDlsAziLow','MD DLS AZI (L)'],['mdDlsIncHigh','MD DLS INC (H)'],['mdDlsIncLow','MD DLS INC (L)'],['lineUpOnTarget','Line up on Target'],['landingPlane','Landing Plane'],['insertLine','Insert Line']];
+}
+function v295EnsurePlanningState(){
+  state.planningMethod = state.planningMethod || 'doglegToolface';
+  state.planningSectionType = state.planningSectionType || 'incAziMd';
+  state.planningParams = state.planningParams || {dls:2.0,tfo:107.66,using:'DLS',cl:30,md:0,inc:0,azi:0,build:0,turn:0,firstHoldLen:300,firstBuild:2.0,maxAngle:45,secondHoldLen:300,secondBuild:2.0,finalInc:10,finalHold:300,holdMode:'cl',tvd:0,verticalSection:0,alignType:'curveHoldCurve',doglegs:2,tangentLength:300,targetTvd:0,targetNs:0,targetEw:0,targetInc:0,targetAzi:0,dipAngle:0,direction:0};
+  state.planningPreview = state.planningPreview || null;
+}
+function v295ActiveRow(){ return state.rows[state.selectedRow] || state.rows[0] || {md:0,inc:0,azi:0,tvd:0,ns:0,ew:0}; }
+function v295DefaultFromActive(){
+  const r=v295ActiveRow();
+  state.planningParams.md = num(r.md) + num(state.planningParams.cl || 30);
+  state.planningParams.inc = num(r.inc); state.planningParams.azi = num(r.azi);
+  state.planningParams.tvd = num(r.tvd);
+  if(!state.planningParams.targetTvd) state.planningParams.targetTvd = num(r.tvd);
+  if(!state.planningParams.targetNs) state.planningParams.targetNs = num(r.ns);
+  if(!state.planningParams.targetEw) state.planningParams.targetEw = num(r.ew);
+}
+function v295ParamInput(key,label,unit=''){
+  const v=state.planningParams?.[key] ?? 0;
+  return `<label class="v295-field"><span>${label}${unit?`<em>${unit}</em>`:''}</span><input data-plan-param="${key}" value="${esc(v)}"/></label>`;
+}
+function v295SelectInput(key,label,options){
+  const v=state.planningParams?.[key] ?? '';
+  return `<label class="v295-field"><span>${label}</span><select data-plan-param="${key}">${options.map(o=>{const val=Array.isArray(o)?o[0]:o; const txt=Array.isArray(o)?o[1]:o; return `<option value="${esc(val)}" ${String(v)===String(val)?'selected':''}>${esc(txt)}</option>`;}).join('')}</select></label>`;
+}
+function v295SectionTypeSelector(){
+  return `<div class="v295-section-types"><b>Section Type</b>${v295SectionTypes().map(([id,label])=>`<button class="${state.planningSectionType===id?'active':''}" onclick="v295SetSectionType('${id}')">${esc(label)}</button>`).join('')}</div>`;
+}
+function v295MethodFormHtml(method){
+  if(method==='slant') return `<div class="v295-form-grid">${v295ParamInput('firstHoldLen','1st Hold Len','m')}${v295ParamInput('firstBuild','1st Build','°/30m')}${v295ParamInput('maxAngle','Max Angle','°')}${v295ParamInput('secondHoldLen','2nd Hold Len','m')}${v295ParamInput('targetTvd','Target TVD','m')}${v295ParamInput('targetNs','Target N/S','m')}${v295ParamInput('targetEw','Target E/W','m')}<div class="v295-unknowns"><b>Select unknowns</b><span>1st Hold / Build / Max Angle / 2nd Hold 可作为后续求解未知量。</span></div></div>`;
+  if(method==='sWell') return `<div class="v295-form-grid">${v295ParamInput('firstHoldLen','1st Hold Len','m')}${v295ParamInput('firstBuild','1st Build','°/30m')}${v295ParamInput('maxAngle','Max Angle','°')}${v295ParamInput('secondHoldLen','2nd Hold Len','m')}${v295ParamInput('secondBuild','2nd Build','°/30m')}${v295ParamInput('finalInc','Final Inc','°')}${v295ParamInput('finalHold','Final Hold','m')}${v295ParamInput('targetTvd','Target TVD','m')}${v295ParamInput('targetNs','Target N/S','m')}${v295ParamInput('targetEw','Target E/W','m')}</div>`;
+  if(method==='buildTurn') return `<div class="v295-form-grid">${v295ParamInput('build','Build','°/30m')}${v295ParamInput('turn','Turn','°/30m')}${v295ParamInput('cl','CL','m')}${v295ParamInput('md','Final MD','m')}${v295ParamInput('inc','Final Inc','°')}${v295ParamInput('azi','Final Azi','°')}<div class="v295-note"><b>Build Turn</b><span>按 Build 与 Turn 从当前行推进下一段。</span></div></div>`;
+  if(method==='doglegToolface') return `<div class="v295-form-grid dogleg">${v295ParamInput('dls','DLS','°/30m')}${v295ParamInput('tfo','TFO','°')}${v295SelectInput('using','Using',[['DLS','DLS'],['TFO','TFO'],['Const-TFO','Const -TFO']])}${v295ParamInput('cl','Final CL','m')}${v295ParamInput('md','Final MD','m')}${v295ParamInput('inc','Final Inc','°')}${v295ParamInput('azi','Final Azi','°')}${v295ParamInput('targetTvd','Target TVD','m')}${v295ParamInput('targetNs','Target N/S','m')}${v295ParamInput('targetEw','Target E/W','m')}</div>`;
+  if(method==='hold') return `<div class="v295-form-grid">${v295SelectInput('holdMode','Hold to',[['cl','CL'],['md','MD'],['tvd','TVD'],['verticalSection','Vertical Section']])}${v295ParamInput('cl','CL','m')}${v295ParamInput('md','MD','m')}${v295ParamInput('tvd','TVD','m')}${v295ParamInput('verticalSection','Vertical Section','m')}<div class="v295-note"><b>Hold</b><span>保持当前 Inc/Azi 不变，按终止条件推进。</span></div></div>`;
+  if(method==='optimumAlign') return `<div class="v295-form-grid">${v295SelectInput('alignType','Type',[['curveHoldCurve','Curve-Hold-Curve'],['curveCurve','Curve-Curve']])}${v295ParamInput('doglegs','Doglegs','#')}${v295ParamInput('tvd','TVD','m')}${v295ParamInput('tangentLength','Tangent Length','m')}${v295ParamInput('targetTvd','Target TVD','m')}${v295ParamInput('targetNs','Target N/S','m')}${v295ParamInput('targetEw','Target E/W','m')}${v295ParamInput('targetInc','Target Inc','°')}${v295ParamInput('targetAzi','Target Azi','°')}<button class="v295-tool-btn" onclick="v295ProjectBackToTarget()">Project Back → Target</button></div>`;
+  return `<div class="v295-form-grid nudge">${v295SectionTypeSelector()}${v295ParamInput('md','MD','m')}${v295ParamInput('cl','CL','m')}${v295ParamInput('inc','INC','°')}${v295ParamInput('azi','AZI','°')}${v295ParamInput('tvd','TVD','m')}${v295ParamInput('dls','DLS','°/30m')}${v295ParamInput('targetTvd','Target TVD','m')}${v295ParamInput('targetNs','Target N/S','m')}${v295ParamInput('targetEw','Target E/W','m')}${v295ParamInput('dipAngle','Dip Angle','°')}${v295ParamInput('direction','Direction','°')}</div>`;
+}
+function v295PlanningPreviewHtml(){
+  const p=state.planningPreview;
+  if(!p||!p.previewRow) return `<div class="v295-preview empty"><b>规划预览</b><span>点击 Calculate 后显示下一段 MD / INC / AZI / TVD / NS / EW / DLS。</span></div>`;
+  const r=p.previewRow;
+  return `<div class="v295-preview"><div><span>MD</span><b>${fmt(r.md,2)}</b></div><div><span>INC</span><b>${fmt(r.inc,2)}</b></div><div><span>AZI</span><b>${fmt(r.azi,2)}</b></div><div><span>TVD</span><b>${fmt(r.tvd,2)}</b></div><div><span>N/S</span><b>${fmt(r.ns,2)}</b></div><div><span>E/W</span><b>${fmt(r.ew,2)}</b></div><div><span>DLS</span><b>${fmt(r.dogleg,3)}</b></div><div><span>Rows</span><b>${p.rowCount||1}</b></div></div>`;
+}
+function v295RenderPlanningDock(){
+  v295EnsurePlanningState();
+  const active = v295PlanningMethods().find(m=>m.id===state.planningMethod) || v295PlanningMethods()[3];
+  return `<div class="v295-planning-dock" id="v295PlanningDock"><div class="v295-dock-head"><div><b>Compass Planning Methods 融合区</b><span>功能参考 Compass Plan Editor，界面保持 DrillSpace 工业风格。</span></div><div class="v295-dock-status"><b>${esc(active.cn)}</b><span>${esc(active.desc)}</span></div></div><div class="v295-method-tabs">${v295PlanningMethods().map(m=>`<button class="${state.planningMethod===m.id?'active':''}" onclick="v295SetPlanningMethod('${m.id}')"><b>${esc(m.label)}</b><span>${esc(m.cn)}</span></button>`).join('')}</div><div class="v295-planning-body"><section class="v295-param-panel"><div class="v295-card-title"><b>Parameters</b><span>${esc(active.label)} / ${esc(active.cn)}</span></div>${v295MethodFormHtml(state.planningMethod)}</section><section class="v295-target-panel"><div class="v295-card-title"><b>Target & Section</b><span>目标约束与段类型</span></div>${state.planningMethod==='nudge'?'':v295SectionTypeSelector()}<div class="v295-target-grid">${v295ParamInput('targetTvd','TVD','m')}${v295ParamInput('targetNs','N/S','m')}${v295ParamInput('targetEw','E/W','m')}</div><button class="v295-tool-btn" onclick="v295AdjustTarget()">Adjust Target</button></section><section class="v295-preview-panel"><div class="v295-card-title"><b>Calculation Preview</b><span>下一段预览</span></div>${v295PlanningPreviewHtml()}</section></div><div class="v295-bottom-actions"><button class="primary" onclick="v295CalculatePlanningMethod()">Calculate</button><button onclick="v295CalculateNext()">Calculate + Next</button><button onclick="v295ApplyPreviewToCurrent()">Apply</button><button onclick="v295InsertPlanningSection()">Insert Section</button><button onclick="saveTrajectory()">Save Version</button><button onclick="v295OpenMethodMap()">Method Map</button><label class="v295-auto"><input type="checkbox" ${state.v295AutoCalculate?'checked':''} onchange="state.v295AutoCalculate=this.checked"> Auto Calculate</label></div></div>`;
+}
+function v295InjectPlanningDock(){
+  v295EnsurePlanningState();
+  const content=$('editorContent');
+  if(!content || state.editorView!=='grid') return;
+  content.classList.add('v295-plan-editor');
+  const old=$('v295PlanningDock'); if(old) old.remove();
+  content.insertAdjacentHTML('beforeend', v295RenderPlanningDock());
+  content.querySelectorAll('[data-plan-param]').forEach(el=>{el.oninput=el.onchange=()=>{const k=el.dataset.planParam; state.planningParams[k]=el.value; if(state.v295AutoCalculate) v295CalculatePlanningMethod(true);};});
+  setTimeout(()=>{ if(typeof renderVirtualRows==='function') renderVirtualRows(true); },30);
+}
+function v295SetPlanningMethod(method){ v295EnsurePlanningState(); state.planningMethod=method; v295DefaultFromActive(); v295InjectPlanningDock(); addLog(`切换规划方法：${method}`); }
+function v295SetSectionType(type){ v295EnsurePlanningState(); state.planningSectionType=type; state.planningParams.sectionType=type; v295InjectPlanningDock(); }
+function v295CollectPayload(){
+  v295EnsurePlanningState();
+  const params={...state.planningParams, sectionType:state.planningSectionType};
+  Object.keys(params).forEach(k=>{ if(params[k]!=='' && !Number.isNaN(Number(params[k])) && !['using','holdMode','alignType','sectionType'].includes(k)) params[k]=Number(params[k]); });
+  return {method:state.planningMethod, sectionType:state.planningSectionType, currentRow:v295ActiveRow(), params};
+}
+function v295LocalSolve(payload){
+  const start=payload.currentRow||v295ActiveRow(), p=payload.params||{}, method=payload.method||'doglegToolface';
+  const sectionLabel=(v295SectionTypes().find(s=>s[0]===payload.sectionType)||['','Inc Azi MD'])[1];
+  let cl=num(p.cl||30), inc=num(start.inc), azi=num(start.azi), md=num(start.md)+cl;
+  const rows=[];
+  if(method==='doglegToolface'){const dangle=num(p.dls||2)*cl/30,tfo=num(p.tfo||0); inc+=dangle*Math.cos(tfo*Math.PI/180); azi+=dangle*Math.sin(tfo*Math.PI/180)/Math.max(.15,Math.sin(Math.max(1,num(start.inc))*Math.PI/180));}
+  else if(method==='buildTurn'){inc+=num(p.build||0)*cl/30; azi+=num(p.turn||0)*cl/30;}
+  else if(method==='hold'){if(p.holdMode==='md') cl=Math.max(0,num(p.md)-num(start.md)); md=num(start.md)+cl;}
+  else if(method==='slant'){const r1={...start,md:num(start.md)+num(p.firstHoldLen||300),inc:num(start.inc),azi:num(start.azi),sectionType:'Hold',remark:'Slant 1st Hold'}; const r2={...r1,md:num(r1.md)+Math.abs(num(p.maxAngle||45)-num(r1.inc))/Math.max(.1,Math.abs(num(p.firstBuild||2)))*30,inc:num(p.maxAngle||45),sectionType:'Build',remark:'Slant Build'}; const r3={...r2,md:num(r2.md)+num(p.secondHoldLen||300),sectionType:'Hold',remark:'Slant 2nd Hold'}; rows.push(r1,r2,r3); return {ok:true,method,sectionType:sectionLabel,start,rows,previewRow:r3,rowCount:rows.length};}
+  else if(method==='sWell'){const r1={...start,md:num(start.md)+num(p.firstHoldLen||300),inc:num(start.inc),azi:num(start.azi),sectionType:'Hold',remark:'S Well 1st Hold'}; const r2={...r1,md:num(r1.md)+Math.abs(num(p.maxAngle||40)-num(r1.inc))/Math.max(.1,Math.abs(num(p.firstBuild||2)))*30,inc:num(p.maxAngle||40),sectionType:'Build',remark:'S Well Build'}; const r3={...r2,md:num(r2.md)+num(p.secondHoldLen||300),sectionType:'Hold',remark:'S Well 2nd Hold'}; const r4={...r3,md:num(r3.md)+Math.abs(num(p.finalInc||10)-num(r3.inc))/Math.max(.1,Math.abs(num(p.secondBuild||2)))*30,inc:num(p.finalInc||10),sectionType:'Drop',remark:'S Well Drop'}; const r5={...r4,md:num(r4.md)+num(p.finalHold||300),sectionType:'Hold',remark:'S Well Final Hold'}; rows.push(r1,r2,r3,r4,r5); return {ok:true,method,sectionType:sectionLabel,start,rows,previewRow:r5,rowCount:rows.length};}
+  else if(method==='optimumAlign'){cl=num(p.tangentLength||300); md=num(start.md)+cl; const dns=num(p.targetNs)-num(start.ns),dew=num(p.targetEw)-num(start.ew); if(Math.abs(dns)+Math.abs(dew)>.001) azi=(Math.atan2(dew,dns)*180/Math.PI+360)%360; inc=num(p.targetInc||start.inc);}
+  else if(method==='nudge'){md=num(p.md||(num(start.md)+cl)); inc=num(p.inc||start.inc); azi=num(p.azi||start.azi); if(payload.sectionType==='landingPlane'){inc=num(p.dipAngle||inc); azi=num(p.direction||azi);}}
+  const row={...start,md,inc,azi:(azi+360)%360,sectionType:sectionLabel,remark:method};
+  rows.push(row);
+  return {ok:true,method,sectionType:sectionLabel,start,rows,previewRow:row,rowCount:rows.length};
+}
+async function v295CalculatePlanningMethod(silent=false){
+  const payload=v295CollectPayload();
+  if(state.apiMode==='api'){
+    try{const base=(state.apiBaseUrl||'http://127.0.0.1:8000').replace(/\/$/,''); const resp=await fetch(base+'/api/well-path/planning/solve-section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`); const json=await resp.json(); state.planningPreview=json.data||json;}
+    catch(err){state.planningPreview=v295LocalSolve(payload); if(!silent) toast(`规划后端失败，使用前端预览：${err.message}`);}
+  }else state.planningPreview=v295LocalSolve(payload);
+  v295InjectPlanningDock(); if(!silent) toast(`规划计算完成：${state.planningMethod}`); return state.planningPreview;
+}
+async function v295InsertPlanningSection(){
+  const result=await v295CalculatePlanningMethod(true), rows=(result&&result.rows)?result.rows:[];
+  if(!rows.length) return toast('没有可插入的规划结果');
+  const normalized=rows.map(r=>({type:r.type||'规划段',md:num(r.md),inc:num(r.inc),azi:num(r.azi),cl:num(r.cl),tvd:num(r.tvd),ns:num(r.ns),ew:num(r.ew),vsec:num(r.vsec),dogleg:num(r.dogleg),tf:num(r.tf),build:num(r.build),turn:num(r.turn),sectionType:r.sectionType||'Inc Azi MD',remark:r.remark||state.planningMethod}));
+  state.rows.splice(state.selectedRow+1,0,...normalized); state.selectedRow=state.selectedRow+normalized.length; recalcRowsLocal(); renderGrid(); updateSummary(); addLog(`插入规划段：${state.planningMethod} / ${normalized.length} 行`); toast(`已插入 ${normalized.length} 行规划结果`);
+}
+async function v295CalculateNext(){ await v295InsertPlanningSection(); selectRow(Math.min(state.rows.length-1,state.selectedRow),true); }
+function v295ApplyPreviewToCurrent(){const r=state.planningPreview?.previewRow; if(!r) return toast('请先 Calculate 生成预览'); const row=state.rows[state.selectedRow]; ['md','inc','azi','tvd','ns','ew','vsec','dogleg','tf','build','turn'].forEach(k=>row[k]=num(r[k])); row.sectionType=r.sectionType||row.sectionType; row.remark=r.remark||row.remark; renderGrid(); updateSummary(); toast('预览结果已应用到当前行');}
+function v295AdjustTarget(){toast('Target 调整入口已预留：后续可接目标库 / 靶区约束求解。');}
+function v295ProjectBackToTarget(){toast('Project Back → Target 已预留：后续接 Optimum Align 后端求解器。');}
+function v295OpenMethodMap(){showModal('Compass Planning Methods 功能映射',`<div class="api-contract-table"><table><thead><tr><th>方法</th><th>DrillSpace 参数面板</th><th>后端接口</th><th>状态</th></tr></thead><tbody>${v295PlanningMethods().map(m=>`<tr><td>${esc(m.label)}</td><td>${esc(m.desc)}</td><td><code>/api/well-path/planning/solve-section</code></td><td>Ready</td></tr>`).join('')}</tbody></table></div>`,()=>{}, {wide:true});}
+(function(){const oldRenderGrid=window.renderGrid||renderGrid; window.renderGrid=function(){oldRenderGrid(); v295DefaultFromActive(); v295InjectPlanningDock();}; setTimeout(()=>{ if(state&&state.editorView==='grid') v295InjectPlanningDock();},120);})();
+window.v295SetPlanningMethod=v295SetPlanningMethod; window.v295SetSectionType=v295SetSectionType; window.v295CalculatePlanningMethod=v295CalculatePlanningMethod; window.v295InsertPlanningSection=v295InsertPlanningSection; window.v295CalculateNext=v295CalculateNext; window.v295ApplyPreviewToCurrent=v295ApplyPreviewToCurrent; window.v295AdjustTarget=v295AdjustTarget; window.v295ProjectBackToTarget=v295ProjectBackToTarget; window.v295OpenMethodMap=v295OpenMethodMap;

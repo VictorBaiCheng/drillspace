@@ -1,7 +1,8 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body, Response, Response, Response, Response, Response
+from fastapi import APIRouter, Body, Response, Response, Response, Response, Response, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
+from app.services.planning_methods import method_templates, solve_planning_method
 from app.services.acceptance_center import export_stage_acceptance_package, latest_stage_acceptance_summary, run_stage_acceptance, stage_summary_csv
 from app.services.collision_acceptance_samples import collision_acceptance_csv, collision_sample_csv, collision_sample_payload, latest_collision_acceptance_report, list_collision_samples, run_all_collision_samples, run_collision_sample, write_collision_sample_files
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
@@ -359,3 +360,26 @@ def stage_acceptance_summary_csv():
 @router.get("/api/well-path/acceptance/package")
 def stage_acceptance_package():
     return data(export_stage_acceptance_package("data"))
+
+
+
+
+@router.get("/api/well-path/planning/methods")
+def planning_methods():
+    return data(method_templates()["methods"])
+
+@router.get("/api/well-path/planning/section-types")
+def planning_section_types():
+    return data(method_templates()["sectionTypes"])
+
+@router.post("/api/well-path/planning/solve-section")
+def planning_solve_section(payload: Dict[str, Any] = Body(default={})):
+    return data(solve_planning_method(payload))
+
+@router.post("/api/well-path/planning/calculate-next")
+def planning_calculate_next(payload: Dict[str, Any] = Body(default={})):
+    return data(solve_planning_method(payload))
+
+@router.post("/api/well-path/planning/insert-section")
+def planning_insert_section(payload: Dict[str, Any] = Body(default={})):
+    return data(solve_planning_method(payload))

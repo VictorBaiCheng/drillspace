@@ -4,7 +4,7 @@ from app.api.well_path import router as well_path_router
 
 app = FastAPI(
     title="DrillSpace Backend",
-    version="2.9.4",
+    version="2.9.5",
     description="Trajectory minimum-curvature and anti-collision reference engine aligned to MyDrill/well-path interface contracts."
 )
 
@@ -21,7 +21,7 @@ def root():
     return {
         "status": "ok",
         "name": "DrillSpace Backend",
-        "version": "2.9.4",
+        "version": "2.9.5",
         "engine": "minimum-curvature-v290",
     }
 
@@ -29,7 +29,7 @@ def root():
 def health():
     return {
         "status": "ok",
-        "version": "2.9.4",
+        "version": "2.9.5",
         "service": "drillspace-fastapi",
         "engine": "minimum-curvature-v290",
         "alignment": "MyDrill well-path API contract reference",
