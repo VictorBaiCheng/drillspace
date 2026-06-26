@@ -614,7 +614,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "vertical_well",
         "name": "01 直井样本",
@@ -1861,7 +1861,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "j_well",
         "name": "02 J形井样本",
@@ -3139,7 +3139,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "s_well",
         "name": "03 S形井样本",
@@ -5006,7 +5006,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "horizontal_well",
         "name": "04 水平井样本",
@@ -6375,7 +6375,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "high_dogleg",
         "name": "05 大狗腿风险样本",
@@ -8118,7 +8118,7 @@
         }
       ],
       "note": "Direct DLL/JNI execution is optional. This report aligns FastAPI result against MyDrill DLL exported CSV/reference rows.",
-      "savedReport": "data/calibration\\mydrill_alignment_report_20260626_092046.json",
+      "savedReport": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/calibration/mydrill_alignment_report_20260626_152003.json",
       "sample": {
         "id": "collision_nearby",
         "name": "06 防碰近邻井样本",
@@ -8131,6 +8131,6 @@
       "sourceType": "generated_acceptance_sample"
     }
   ],
-  "generatedAt": "2026-06-26 09:20:46",
+  "generatedAt": "2026-06-26 15:20:03",
   "note": "V2.9.2 batch report runs all built-in acceptance samples. The high-dogleg case may intentionally remain REVIEW to validate review workflow."
 }

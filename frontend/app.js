@@ -1,4 +1,4 @@
-/* DrillSpace V2.9.2.2 Acceptance Report Route Fix
+/* DrillSpace V2.9.4 Trajectory Subsystem Acceptance Center
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -1693,7 +1693,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.9.2-A5123');
+  addLog('保存轨迹版本 V2.9.4-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -2193,7 +2193,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.9.2.2 总报告接口修复版');
+  addLog('打开 DrillSpace V2.9.4 轨迹子系统阶段验收中心版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();
@@ -2681,3 +2681,124 @@ window.renderCalibrationReportPage = renderCalibrationReportPage;
     if(label) label.textContent = `${state.batchAcceptanceReport.totalSamples || 0} samples · ${state.batchAcceptanceReport.overallVerdict || 'REVIEW'} · V2.9.2.1`;
   };
 })();
+
+
+/* =========================================================
+   V2.9.3 Collision Acceptance Runtime
+   防碰扫描标准样本库 + 防碰总体验收报告。
+   ========================================================= */
+function collisionSampleDefaults(){
+  return [
+    {id:'far_safe',name:'01 远距离安全样本',level:'safe',expectedStatus:'SAFE',desc:'当前井与邻井保持较大安全距离。'},
+    {id:'nearby_risk',name:'02 近邻井风险样本',level:'danger',expectedStatus:'DANGER',desc:'邻井在关键井段接近当前井。'},
+    {id:'low_sf',name:'03 低分离系数样本',level:'review',expectedStatus:'REVIEW',desc:'中心距尚可但分离系数偏低。'},
+    {id:'normal_plane',name:'04 法平面扫描样本',level:'review',expectedStatus:'REVIEW',desc:'验证法平面扫描角与极图数据。'},
+    {id:'horizontal_scan',name:'05 水平扫描样本',level:'warning',expectedStatus:'WARNING',desc:'验证水平扫描角分布。'},
+    {id:'ellipsoid_amplified',name:'06 误差椭球放大样本',level:'review',expectedStatus:'REVIEW',desc:'增大误差半径触发复核。'}
+  ];
+}
+function localCollisionAcceptanceReport(){
+  const samples = collisionSampleDefaults();
+  const sfMap = {far_safe:3.85, nearby_risk:0.82, low_sf:1.22, normal_plane:1.34, horizontal_scan:1.72, ellipsoid_amplified:1.18};
+  const distMap = {far_safe:92.4, nearby_risk:20.8, low_sf:31.2, normal_plane:33.8, horizontal_scan:43.5, ellipsoid_amplified:46.8};
+  const actualMap = {far_safe:'SAFE', nearby_risk:'DANGER', low_sf:'REVIEW', normal_plane:'REVIEW', horizontal_scan:'WARNING', ellipsoid_amplified:'REVIEW'};
+  const rows = samples.map((s,i)=>({sampleId:s.id,name:s.name,expectedStatus:s.expectedStatus,actualStatus:actualMap[s.id],sampleVerdict:actualMap[s.id]===s.expectedStatus?'PASS':'REVIEW',minDistance:distMap[s.id],minSeparationFactor:sfMap[s.id],nearestMd:2600+i*180,risk:actualMap[s.id],recommendation:actualMap[s.id]===s.expectedStatus?'通过':'复核防碰阈值'}));
+  const passCount=rows.filter(r=>r.sampleVerdict==='PASS').length;
+  const reviewCount=rows.filter(r=>r.sampleVerdict==='REVIEW').length;
+  const dangerCount=rows.filter(r=>r.actualStatus==='DANGER').length;
+  return {ok:true,version:'2.9.3',reportType:'CollisionAcceptanceReport',overallVerdict:reviewCount===0?'PASS':'REVIEW',totalSamples:rows.length,passCount,reviewCount,dangerCount,minGlobalDistance:Math.min(...rows.map(r=>num(r.minDistance))),minGlobalSeparationFactor:Math.min(...rows.map(r=>num(r.minSeparationFactor))),samples:rows,note:'前端Mock防碰验收报告。API模式下将调用后端防碰样本库。'};
+}
+async function runAllCollisionSamples(){
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/collision-acceptance/run-all', {method:'POST'});
+      state.collisionAcceptanceReport = json.data || json;
+      toast('全部防碰标准样本已运行完成');
+    }catch(err){
+      state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+      toast(`后端防碰批量运行失败，使用前端Mock：${err.message}`);
+    }
+  }else{
+    state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+    toast('当前 MOCK 模式：已运行全部防碰样本');
+  }
+  renderCalibrationReportPage();
+  addLog(`运行全部防碰样本：${state.collisionAcceptanceReport.overallVerdict}`);
+}
+async function loadCollisionAcceptanceReport(){
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/collision-acceptance/report');
+      state.collisionAcceptanceReport = json.data || json;
+      toast('已读取防碰总体验收报告');
+    }catch(err){
+      state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+      toast(`读取防碰报告失败，使用前端Mock：${err.message}`);
+    }
+  }else{
+    state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+    toast('当前 MOCK 模式：已读取防碰验收报告');
+  }
+  renderCalibrationReportPage();
+}
+async function runCollisionAcceptanceSample(sampleId){
+  state.activeCollisionSample = sampleId;
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson(`/api/well-path/collision-acceptance/samples/${sampleId}/run`, {method:'POST'});
+      const report = json.data || json;
+      state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+      state.collisionAcceptanceReport.samples = (state.collisionAcceptanceReport.samples || []).filter(r => r.sampleId !== sampleId);
+      state.collisionAcceptanceReport.samples.unshift({sampleId:report.sampleId,name:report.sample?.name || sampleId,expectedStatus:report.expectedStatus,actualStatus:report.actualStatus,sampleVerdict:report.sampleVerdict,minDistance:report.minDistance,minSeparationFactor:report.minSeparationFactor,nearestMd:report.nearestMd,risk:report.risk,recommendation:report.recommendation});
+      toast(`防碰样本完成：${sampleId}`);
+    }catch(err){ toast(`运行防碰样本失败：${err.message}`); }
+  }else{
+    state.collisionAcceptanceReport = localCollisionAcceptanceReport();
+    toast('MOCK 模式：已运行防碰样本');
+  }
+  renderCalibrationReportPage();
+}
+function collisionAcceptanceTableHtml(report){
+  const rows = report.samples || [];
+  return `<table class="collision-acceptance-table"><thead><tr><th>#</th><th>样本</th><th>预期</th><th>实际</th><th>结论</th><th>最小中心距</th><th>最小SF</th><th>最近MD</th><th>建议</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${String(r.sampleVerdict).toUpperCase()==='PASS'?'row-pass':'row-review'}"><td>${i+1}</td><td>${esc(r.name)}</td><td>${esc(r.expectedStatus)}</td><td><b>${esc(r.actualStatus)}</b></td><td>${esc(r.sampleVerdict)}</td><td>${fmt(r.minDistance,2)}</td><td>${fmt(r.minSeparationFactor,2)}</td><td>${fmt(r.nearestMd,1)}</td><td>${esc(r.recommendation || '')}</td></tr>`).join('')}</tbody></table>`;
+}
+function collisionAcceptancePanelHtml(){
+  const report = state.collisionAcceptanceReport || localCollisionAcceptanceReport();
+  const samples = collisionSampleDefaults();
+  const verdictClass = String(report.overallVerdict || '').toUpperCase() === 'PASS' ? 'pass' : 'review';
+  return `<section class="collision-acceptance-v293"><div class="collision-acceptance-head ${verdictClass}"><div><b>防碰扫描标准样本库 / Collision Acceptance Samples</b><span>覆盖远距离安全、近邻井风险、低分离系数、法平面、水平扫描、误差椭球放大六类场景。</span></div><div class="collision-acceptance-verdict"><strong>${esc(report.overallVerdict || 'REVIEW')}</strong><small>${report.passCount || 0} PASS / ${report.reviewCount || 0} REVIEW / ${report.dangerCount || 0} DANGER</small></div></div><div class="collision-acceptance-actions"><button class="primary" onclick="runAllCollisionSamples()">运行全部防碰样本</button><button onclick="loadCollisionAcceptanceReport()">读取防碰总报告</button><button onclick="exportCollisionAcceptanceJson()">导出防碰 JSON</button><button onclick="exportCollisionAcceptanceCsv()">导出防碰 CSV</button></div><div class="collision-sample-grid">${samples.map(s => `<button class="collision-sample-card ${s.level}" onclick="runCollisionAcceptanceSample('${s.id}')"><b>${esc(s.name)}</b><span>${esc(s.desc)}</span><em>预期 ${esc(s.expectedStatus)}</em></button>`).join('')}</div><div class="collision-acceptance-kpis"><div><span>总样本数</span><b>${report.totalSamples || 0}</b></div><div><span>最小中心距</span><b>${fmt(report.minGlobalDistance || 0,2)}m</b></div><div><span>最小分离系数</span><b>${fmt(report.minGlobalSeparationFactor || 0,2)}</b></div><div><span>高风险样本</span><b>${report.dangerCount || 0}</b></div></div><div class="collision-acceptance-table-wrap">${collisionAcceptanceTableHtml(report)}</div></section>`;
+}
+function exportCollisionAcceptanceJson(){
+  const report = state.collisionAcceptanceReport || localCollisionAcceptanceReport();
+  downloadTextFile('DrillSpace_Collision_Acceptance_Report.json', JSON.stringify(report,null,2), 'application/json;charset=utf-8');
+  toast('已导出防碰验收 JSON');
+}
+function exportCollisionAcceptanceCsv(){
+  const report = state.collisionAcceptanceReport || localCollisionAcceptanceReport();
+  const cols = ['sampleId','name','expectedStatus','actualStatus','sampleVerdict','minDistance','minSeparationFactor','nearestMd','risk','recommendation'];
+  const csv = [cols.join(',')].concat((report.samples||[]).map(r => cols.map(c => r[c] ?? '').join(','))).join('\n');
+  downloadTextFile('DrillSpace_Collision_Acceptance_Report.csv', csv, 'text/csv;charset=utf-8');
+  toast('已导出防碰验收 CSV');
+}
+(function(){
+  const oldRender = window.renderCalibrationReportPage || renderCalibrationReportPage;
+  window.renderCalibrationReportPage = function(){
+    oldRender();
+    const box = document.querySelector('.calibration-page-v290');
+    if(!box || box.querySelector('.collision-acceptance-v293')) return;
+    state.collisionAcceptanceReport = state.collisionAcceptanceReport || localCollisionAcceptanceReport();
+    const batch = box.querySelector('.batch-acceptance-v292');
+    const lib = box.querySelector('.sample-library-v291');
+    const holder = document.createElement('div');
+    holder.innerHTML = collisionAcceptancePanelHtml();
+    const panel = holder.firstElementChild;
+    if(batch && batch.nextSibling) box.insertBefore(panel, batch.nextSibling);
+    else if(lib) box.insertBefore(panel, lib);
+    else box.prepend(panel);
+  };
+})();
+window.runAllCollisionSamples = runAllCollisionSamples;
+window.loadCollisionAcceptanceReport = loadCollisionAcceptanceReport;
+window.runCollisionAcceptanceSample = runCollisionAcceptanceSample;
+window.exportCollisionAcceptanceJson = exportCollisionAcceptanceJson;
+window.exportCollisionAcceptanceCsv = exportCollisionAcceptanceCsv;

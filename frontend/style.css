@@ -1373,3 +1373,50 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
 .batch-table td:nth-child(2),.batch-table td:last-child{text-align:left}
 .batch-table .row-pass td{background:#fbfffd}.batch-table .row-review td{background:#fffaf1}
 @media(max-width:1500px){.batch-kpi-grid{grid-template-columns:repeat(3,1fr)}.batch-error-grid{grid-template-columns:repeat(3,1fr)}}
+
+
+/* =========================================================
+   DrillSpace V2.9.3 Collision Acceptance Samples
+   防碰扫描标准样本库
+   ========================================================= */
+.collision-acceptance-v293{border:1px solid #bdccdc;background:#fbfdff;border-radius:3px;display:grid;gap:8px;padding:8px;margin:8px 0;box-shadow:0 1px 6px rgba(15,52,92,.06)}
+.collision-acceptance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e1eaf3;padding-bottom:8px}
+.collision-acceptance-head.pass{box-shadow:inset 3px 0 0 #13a66f;padding-left:8px}.collision-acceptance-head.review{box-shadow:inset 3px 0 0 #d48a09;padding-left:8px}
+.collision-acceptance-head b{font-size:14px;color:#10243f}.collision-acceptance-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.collision-acceptance-verdict{min-width:190px;border:1px solid #c8d6e6;background:#fff;padding:7px 10px;text-align:right}
+.collision-acceptance-verdict strong{display:block;font-size:22px;color:#0d55bd;line-height:24px}.collision-acceptance-verdict small{font-size:10px;color:#6a7d92}
+.collision-acceptance-actions{display:flex;gap:6px;flex-wrap:wrap}.collision-acceptance-actions button{height:28px;border:1px solid #c7d5e4;background:#fff;border-radius:2px;font-weight:850;color:#263f5f;padding:0 10px}.collision-acceptance-actions .primary{background:#1d5fd0;color:#fff;border-color:#1d5fd0}
+.collision-sample-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:6px}
+.collision-sample-card{min-height:78px;text-align:left;border:1px solid #cbd8e7;border-top:3px solid #9fc2ef;background:#fff;border-radius:3px;padding:7px 8px;display:grid;grid-template-rows:auto 1fr auto;gap:4px}
+.collision-sample-card b{font-size:12px;color:#10243f}.collision-sample-card span{font-size:10px;color:#65798f;line-height:1.35}.collision-sample-card em{font-style:normal;font-size:9px;color:#50627a;font-weight:850}
+.collision-sample-card.safe{border-top-color:#13a66f}.collision-sample-card.warning{border-top-color:#d48a09}.collision-sample-card.review{border-top-color:#f0aaa8}.collision-sample-card.danger{border-top-color:#d94444}
+.collision-acceptance-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.collision-acceptance-kpis div{border:1px solid #d4e0ec;background:#fff;padding:7px 9px;border-left:2px solid #9fc2ef}.collision-acceptance-kpis span{display:block;font-size:10px;color:#6a7d92}.collision-acceptance-kpis b{font-size:18px;color:#10243f}
+.collision-acceptance-table-wrap{max-height:230px;overflow:auto;border:1px solid #d4e0ec;background:#fff}
+.collision-acceptance-table{width:100%;border-collapse:collapse;font-size:11px}.collision-acceptance-table th{position:sticky;top:0;background:#edf4fb;border:1px solid #d5e1ee;height:28px;color:#263e5e}.collision-acceptance-table td{border:1px solid #e3edf6;height:26px;text-align:center;padding:0 5px}.collision-acceptance-table td:nth-child(2),.collision-acceptance-table td:last-child{text-align:left}.collision-acceptance-table .row-pass td{background:#fbfffd}.collision-acceptance-table .row-review td{background:#fffaf1}
+@media(max-width:1500px){.collision-sample-grid{grid-template-columns:repeat(3,minmax(140px,1fr))}.collision-acceptance-kpis{grid-template-columns:repeat(2,1fr)}}
+
+
+/* =========================================================
+   DrillSpace V2.9.4 Trajectory Subsystem Acceptance Center
+   阶段验收中心
+   ========================================================= */
+.stage-acceptance-v294{border:1px solid #b8c8d9;background:#fbfdff;border-radius:3px;display:grid;gap:8px;padding:8px;margin:8px 0;box-shadow:0 2px 8px rgba(15,52,92,.08)}
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e1eaf3;padding-bottom:8px}
+.stage-head.pass{box-shadow:inset 4px 0 0 #13a66f;padding-left:8px}.stage-head.review{box-shadow:inset 4px 0 0 #d48a09;padding-left:8px}
+.stage-head b{font-size:15px;color:#10243f}.stage-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.stage-verdict{min-width:190px;border:1px solid #c8d6e6;background:#fff;padding:8px 12px;text-align:right}
+.stage-verdict strong{display:block;font-size:24px;color:#0d55bd;line-height:26px}.stage-verdict small{font-size:10px;color:#6a7d92}
+.stage-actions{display:flex;gap:6px;flex-wrap:wrap}.stage-actions button{height:29px;border:1px solid #c7d5e4;background:#fff;border-radius:2px;font-weight:850;color:#263f5f;padding:0 10px}.stage-actions .primary{background:#1d5fd0;color:#fff;border-color:#1d5fd0}
+.stage-kpi-grid{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:6px}
+.stage-kpi{border:1px solid #cbd8e7;border-top:3px solid #9fc2ef;background:#fff;padding:8px 10px;min-height:60px}
+.stage-kpi.pass{border-top-color:#13a66f}.stage-kpi.review{border-top-color:#d48a09}
+.stage-kpi span{display:block;font-size:10px;color:#6a7d92;font-weight:850}.stage-kpi b{display:block;font-size:22px;color:#10243f;line-height:25px}.stage-kpi em{font-style:normal;font-size:9px;color:#6a7d92}
+.stage-lines-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stage-line-card{border:1px solid #d4e0ec;background:#fff;padding:9px 10px;border-left:3px solid #d48a09}
+.stage-line-card.pass{border-left-color:#13a66f}.stage-line-card.review{border-left-color:#d48a09}
+.stage-line-card b{display:block;font-size:13px;color:#10243f}.stage-line-card span{display:block;font-size:11px;color:#50627a;margin-top:4px}.stage-line-card em{display:block;font-style:normal;font-size:10px;color:#6a7d92;margin-top:3px}
+.stage-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stage-status-grid div{border:1px solid #d4e0ec;background:#fff;padding:7px 9px;border-top:2px solid #9fc2ef}.stage-status-grid span{display:block;font-size:10px;color:#6a7d92}.stage-status-grid b{font-size:14px;color:#13a66f}
+.stage-file-list{border:1px solid #d4e0ec;background:#fff;padding:8px;display:grid;gap:4px}
+.stage-file-list>b{font-size:12px;color:#10243f;margin-bottom:2px}.stage-file-list div{display:grid;grid-template-columns:170px 1fr;gap:8px;border-top:1px solid #edf3fa;padding-top:4px;font-size:11px}.stage-file-list span{color:#50627a}.stage-file-list code{color:#0d55bd;font-family:Consolas,monospace}
+@media(max-width:1500px){.stage-kpi-grid{grid-template-columns:repeat(3,1fr)}.stage-lines-grid{grid-template-columns:1fr}.stage-status-grid{grid-template-columns:repeat(2,1fr)}}

@@ -1,0 +1,7 @@
+﻿sampleId,name,expectedStatus,actualStatus,sampleVerdict,minDistance,minSeparationFactor,nearestMd,risk,recommendation
+far_safe,01 远距离安全样本,SAFE,SAFE,PASS,102.112,4.513,2900.0,中低,通过
+nearby_risk,02 近邻井风险样本,DANGER,DANGER,PASS,18.283,0.718,2700.0,高,通过
+low_sf,03 低分离系数样本,REVIEW,REVIEW,PASS,31.631,1.243,3100.0,中,通过
+normal_plane,04 法平面扫描样本,REVIEW,REVIEW,PASS,29.538,1.16,3200.0,中,通过
+horizontal_scan,05 水平扫描样本,WARNING,WARNING,PASS,38.191,1.5,3500.0,中低,通过
+ellipsoid_amplified,06 误差椭球放大样本,REVIEW,REVIEW,PASS,42.291,1.068,3000.0,中,通过

@@ -1,7 +1,9 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body, Response, Response, Response
+from fastapi import APIRouter, Body, Response, Response, Response, Response, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
+from app.services.acceptance_center import export_stage_acceptance_package, latest_stage_acceptance_summary, run_stage_acceptance, stage_summary_csv
+from app.services.collision_acceptance_samples import collision_acceptance_csv, collision_sample_csv, collision_sample_payload, latest_collision_acceptance_report, list_collision_samples, run_all_collision_samples, run_collision_sample, write_collision_sample_files
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
 from app.services.acceptance_samples import calibrate_sample, list_samples, sample_csv, sample_payload, write_sample_files, acceptance_report_csv, batch_acceptance_report, latest_batch_acceptance_report
 
@@ -287,3 +289,73 @@ def acceptance_batch_report_csv_alias():
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=drillspace_acceptance_report.csv"}
     )
+
+
+
+@router.get("/api/well-path/collision-acceptance/samples")
+def collision_acceptance_sample_list():
+    return data(list_collision_samples())
+
+@router.get("/api/well-path/collision-acceptance/samples/{sample_id}")
+def collision_acceptance_sample_detail(sample_id: str):
+    return data(collision_sample_payload(sample_id))
+
+@router.post("/api/well-path/collision-acceptance/samples/{sample_id}/run")
+def collision_acceptance_sample_run(sample_id: str):
+    return data(run_collision_sample(sample_id, save_dir="data/calibration"))
+
+@router.post("/api/well-path/collision-acceptance/run-all")
+def collision_acceptance_run_all():
+    return data(run_all_collision_samples("data/calibration"))
+
+@router.get("/api/well-path/collision-acceptance/report")
+def collision_acceptance_report():
+    return data(latest_collision_acceptance_report("data/calibration/collision_acceptance_report.json"))
+
+@router.get("/api/well-path/collision-acceptance/report.csv")
+def collision_acceptance_report_csv():
+    report = latest_collision_acceptance_report("data/calibration/collision_acceptance_report.json")
+    text = collision_acceptance_csv(report)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_collision_acceptance_report.csv"}
+    )
+
+@router.get("/api/well-path/collision-acceptance/samples/{sample_id}/csv")
+def collision_acceptance_sample_csv_endpoint(sample_id: str, kind: str = "current"):
+    text = collision_sample_csv(sample_id, kind=kind)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={sample_id}_{kind}.csv"}
+    )
+
+@router.post("/api/well-path/collision-acceptance/generate-files")
+def collision_acceptance_generate_files():
+    return data(write_collision_sample_files("sample_data/collision_acceptance"))
+
+
+
+
+@router.post("/api/well-path/acceptance/run-all")
+def stage_acceptance_run_all():
+    return data(run_stage_acceptance("data"))
+
+@router.get("/api/well-path/acceptance/summary")
+def stage_acceptance_summary():
+    return data(latest_stage_acceptance_summary("data"))
+
+@router.get("/api/well-path/acceptance/summary.csv")
+def stage_acceptance_summary_csv():
+    summary = latest_stage_acceptance_summary("data")
+    text = stage_summary_csv(summary)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_stage_acceptance_summary.csv"}
+    )
+
+@router.get("/api/well-path/acceptance/package")
+def stage_acceptance_package():
+    return data(export_stage_acceptance_package("data"))

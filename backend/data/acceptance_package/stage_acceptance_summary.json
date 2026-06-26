@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "version": "2.9.4",
+  "reportType": "TrajectorySubsystemAcceptanceSummary",
+  "overallVerdict": "PASS",
+  "totalSamples": 12,
+  "passCount": 11,
+  "reviewCount": 1,
+  "failCount": 0,
+  "acceptanceRate": 0.9167,
+  "trajectory": {
+    "overallVerdict": "PASS",
+    "totalSamples": 6,
+    "passCount": 5,
+    "reviewCount": 1,
+    "maxErrors": {
+      "TVD": 0.089999,
+      "NS": 0.109939,
+      "EW": 0.099957,
+      "DOGLEG": 0.045,
+      "BUILD": 0.03995,
+      "TURN": 0.034975
+    }
+  },
+  "collision": {
+    "overallVerdict": "PASS",
+    "totalSamples": 6,
+    "passCount": 6,
+    "reviewCount": 0,
+    "dangerCount": 1,
+    "minGlobalDistance": 18.283,
+    "minGlobalSeparationFactor": 0.718
+  },
+  "interfaceStatus": {
+    "health": "OK",
+    "trajectoryBatch": "READY",
+    "collisionBatch": "READY",
+    "exportPackage": "READY"
+  },
+  "reportFiles": {
+    "trajectoryJson": "backend/data/calibration/acceptance_report.json",
+    "trajectoryCsv": "backend/data/calibration/acceptance_report.csv",
+    "collisionJson": "backend/data/calibration/collision_acceptance_report.json",
+    "collisionCsv": "backend/data/calibration/collision_acceptance_report.csv",
+    "summaryJson": "backend/data/acceptance_package/stage_acceptance_summary.json",
+    "summaryMd": "backend/data/acceptance_package/stage_acceptance_summary.md"
+  },
+  "generatedAt": "2026-06-26 15:20:04",
+  "note": "Stage acceptance center consolidates trajectory calculation and collision scanning acceptance workflows."
+}
