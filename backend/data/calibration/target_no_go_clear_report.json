@@ -1,0 +1,99 @@
+{
+  "ok": true,
+  "sampleId": "no_go_clear",
+  "sample": {
+    "id": "no_go_clear",
+    "name": "04 避让区安全样本",
+    "mode": "evaluate",
+    "targetId": "no_go_fault",
+    "targetName": "No-Go Zone / 避让区",
+    "desc": "轨迹点未进入 No-Go Zone。"
+  },
+  "expectedVerdict": "PASS",
+  "actualVerdict": "PASS",
+  "sampleVerdict": "PASS",
+  "row": {
+    "md": 4100,
+    "inc": 80,
+    "azi": 119,
+    "tvd": 3350,
+    "ns": 2050,
+    "ew": 1680
+  },
+  "target": {
+    "id": "no_go_fault",
+    "name": "No-Go Zone / 避让区",
+    "type": "noGo",
+    "tvd": 3300.0,
+    "ns": 1750.0,
+    "ew": 1320.0,
+    "verticalSection": 2200.0,
+    "radius": 120.0,
+    "ellipseMajor": 160.0,
+    "ellipseMinor": 100.0,
+    "entryInc": 0.0,
+    "entryAzi": 0.0,
+    "tolerance": 50.0,
+    "priority": "avoid",
+    "enabled": true,
+    "remark": "避让区，进入半径内视为风险"
+  },
+  "result": {
+    "ok": true,
+    "targetId": "no_go_fault",
+    "targetName": "No-Go Zone / 避让区",
+    "targetType": "noGo",
+    "row": {
+      "md": 4100,
+      "inc": 80,
+      "azi": 119,
+      "tvd": 3350,
+      "ns": 2050,
+      "ew": 1680
+    },
+    "target": {
+      "id": "no_go_fault",
+      "name": "No-Go Zone / 避让区",
+      "type": "noGo",
+      "tvd": 3300.0,
+      "ns": 1750.0,
+      "ew": 1320.0,
+      "verticalSection": 2200.0,
+      "radius": 120.0,
+      "ellipseMajor": 160.0,
+      "ellipseMinor": 100.0,
+      "entryInc": 0.0,
+      "entryAzi": 0.0,
+      "tolerance": 50.0,
+      "priority": "avoid",
+      "enabled": true,
+      "remark": "避让区，进入半径内视为风险"
+    },
+    "errors": {
+      "tvdError": 50.0,
+      "nsError": 300.0,
+      "ewError": 360.0,
+      "horizontalError": 468.615,
+      "centerDistance3d": 471.2749,
+      "ellipseValue": 16.475625
+    },
+    "limits": {
+      "radius": 120.0,
+      "ellipseMajor": 160.0,
+      "ellipseMinor": 100.0,
+      "tolerance": 50.0
+    },
+    "checks": {
+      "inCircle": false,
+      "inEllipse": false,
+      "tvdOk": true,
+      "inTarget": false,
+      "noGoZone": true
+    },
+    "status": "CLEAR",
+    "verdict": "PASS",
+    "generatedAt": "2026-06-26 22:57:47"
+  },
+  "recommendation": "通过",
+  "generatedAt": "2026-06-26 22:57:47"
+}

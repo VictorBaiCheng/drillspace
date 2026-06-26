@@ -1,13 +1,13 @@
 {
   "ok": true,
-  "version": "2.9.6",
+  "version": "2.9.7",
   "reportType": "TrajectorySubsystemAcceptanceSummary",
   "overallVerdict": "PASS",
-  "totalSamples": 21,
-  "passCount": 20,
+  "totalSamples": 28,
+  "passCount": 27,
   "reviewCount": 1,
   "failCount": 0,
-  "acceptanceRate": 0.9524,
+  "acceptanceRate": 0.9643,
   "trajectory": {
     "overallVerdict": "PASS",
     "totalSamples": 6,
@@ -48,11 +48,27 @@
       "nudge"
     ]
   },
+  "target": {
+    "overallVerdict": "PASS",
+    "totalSamples": 7,
+    "passCount": 7,
+    "reviewCount": 0,
+    "modes": [
+      "evaluate",
+      "evaluate",
+      "evaluate",
+      "evaluate",
+      "lineUp",
+      "solve",
+      "solve"
+    ]
+  },
   "interfaceStatus": {
     "health": "OK",
     "trajectoryBatch": "READY",
     "collisionBatch": "READY",
     "planningBatch": "READY",
+    "targetBatch": "READY",
     "exportPackage": "READY"
   },
   "reportFiles": {
@@ -62,9 +78,11 @@
     "collisionCsv": "backend/data/calibration/collision_acceptance_report.csv",
     "planningJson": "backend/data/calibration/planning_acceptance_report.json",
     "planningCsv": "backend/data/calibration/planning_acceptance_report.csv",
+    "targetJson": "backend/data/calibration/target_acceptance_report.json",
+    "targetCsv": "backend/data/calibration/target_acceptance_report.csv",
     "summaryJson": "backend/data/acceptance_package/stage_acceptance_summary.json",
     "summaryMd": "backend/data/acceptance_package/stage_acceptance_summary.md"
   },
-  "generatedAt": "2026-06-26 22:34:53",
-  "note": "Stage acceptance center consolidates trajectory, collision and planning-method acceptance workflows."
+  "generatedAt": "2026-06-26 22:57:47",
+  "note": "Stage acceptance center consolidates trajectory, collision, planning-method and target-constraint acceptance workflows."
 }

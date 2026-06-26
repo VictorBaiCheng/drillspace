@@ -1,0 +1,99 @@
+{
+  "ok": true,
+  "sampleId": "circle_hit",
+  "sample": {
+    "id": "circle_hit",
+    "name": "01 圆形靶区入靶样本",
+    "mode": "evaluate",
+    "targetId": "target_center",
+    "targetName": "Target Center / 靶心",
+    "desc": "水平误差与垂深误差均在圆形靶区容差内。"
+  },
+  "expectedVerdict": "PASS",
+  "actualVerdict": "PASS",
+  "sampleVerdict": "PASS",
+  "row": {
+    "md": 4360,
+    "inc": 86,
+    "azi": 121.8,
+    "tvd": 3508,
+    "ns": 2060,
+    "ew": 1572
+  },
+  "target": {
+    "id": "target_center",
+    "name": "Target Center / 靶心",
+    "type": "target",
+    "tvd": 3500.0,
+    "ns": 2050.0,
+    "ew": 1560.0,
+    "verticalSection": 2570.0,
+    "radius": 35.0,
+    "ellipseMajor": 60.0,
+    "ellipseMinor": 35.0,
+    "entryInc": 86.0,
+    "entryAzi": 121.8,
+    "tolerance": 20.0,
+    "priority": "primary",
+    "enabled": true,
+    "remark": "主目标靶区"
+  },
+  "result": {
+    "ok": true,
+    "targetId": "target_center",
+    "targetName": "Target Center / 靶心",
+    "targetType": "target",
+    "row": {
+      "md": 4360,
+      "inc": 86,
+      "azi": 121.8,
+      "tvd": 3508,
+      "ns": 2060,
+      "ew": 1572
+    },
+    "target": {
+      "id": "target_center",
+      "name": "Target Center / 靶心",
+      "type": "target",
+      "tvd": 3500.0,
+      "ns": 2050.0,
+      "ew": 1560.0,
+      "verticalSection": 2570.0,
+      "radius": 35.0,
+      "ellipseMajor": 60.0,
+      "ellipseMinor": 35.0,
+      "entryInc": 86.0,
+      "entryAzi": 121.8,
+      "tolerance": 20.0,
+      "priority": "primary",
+      "enabled": true,
+      "remark": "主目标靶区"
+    },
+    "errors": {
+      "tvdError": 8.0,
+      "nsError": 10.0,
+      "ewError": 12.0,
+      "horizontalError": 15.6205,
+      "centerDistance3d": 17.5499,
+      "ellipseValue": 0.145329
+    },
+    "limits": {
+      "radius": 35.0,
+      "ellipseMajor": 60.0,
+      "ellipseMinor": 35.0,
+      "tolerance": 20.0
+    },
+    "checks": {
+      "inCircle": true,
+      "inEllipse": true,
+      "tvdOk": true,
+      "inTarget": true,
+      "noGoZone": false
+    },
+    "status": "IN_TARGET",
+    "verdict": "PASS",
+    "generatedAt": "2026-06-26 22:57:47"
+  },
+  "recommendation": "通过",
+  "generatedAt": "2026-06-26 22:57:47"
+}

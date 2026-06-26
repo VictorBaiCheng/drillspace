@@ -1812,3 +1812,279 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
 @media(max-width:1500px){
   .planning-acceptance-kpis{grid-template-columns:repeat(2,1fr)}
 }
+
+
+/* =========================================================
+   DrillSpace V2.9.7 Target Zone + Trajectory Constraint Center
+   目标靶区与轨迹约束中心
+   ========================================================= */
+.editor-content.v295-plan-editor.v297-target-editor{
+  grid-template-rows:minmax(0,1fr) 174px 286px !important;
+}
+.v297-target-center{
+  min-height:0;
+  border:1px solid #b9c9db;
+  background:#fbfdff;
+  border-radius:3px;
+  display:grid;
+  grid-template-rows:32px minmax(0,1fr) 32px;
+  gap:6px;
+  padding:6px;
+  overflow:hidden;
+  box-shadow:0 1px 6px rgba(15,52,92,.06);
+}
+.v297-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid #e3edf6;
+  padding:0 4px 5px;
+}
+.v297-head b{font-size:13px;color:#10243f}
+.v297-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.v297-current{
+  min-width:260px;
+  text-align:right;
+  border:1px solid #cbd8e7;
+  background:#fff;
+  padding:4px 8px;
+}
+.v297-current b{color:#0d55bd}
+.v297-body{
+  min-height:0;
+  display:grid;
+  grid-template-columns:300px minmax(430px,1.3fr) minmax(270px,.8fr);
+  gap:6px;
+  overflow:hidden;
+}
+.v297-list,.v297-config,.v297-eval{
+  border:1px solid #d2deea;
+  background:#fff;
+  border-radius:2px;
+  overflow:auto;
+  padding:6px;
+}
+.v297-card-title{
+  height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid #edf3fa;
+  margin-bottom:5px;
+}
+.v297-card-title b{font-size:11px;color:#10243f}
+.v297-card-title span{font-size:9px;color:#6a7d92}
+.v297-target-list{
+  display:grid;
+  grid-auto-rows:minmax(30px,auto);
+  gap:4px;
+}
+.v297-target-list button{
+  border:1px solid #d2deea;
+  background:#fff;
+  border-left:3px solid #9fc2ef;
+  border-radius:2px;
+  padding:5px 7px;
+  text-align:left;
+}
+.v297-target-list button.active{
+  background:#eef5ff;
+  border-color:#9ebfe1;
+  border-left-color:#1d5fd0;
+}
+.v297-target-list button.nogozone{border-left-color:#d45b54}
+.v297-target-list b{
+  display:block;
+  font-size:11px;
+  color:#10243f;
+}
+.v297-target-list span{
+  display:block;
+  font-size:9px;
+  color:#6a7d92;
+  margin-top:2px;
+}
+.v297-config-grid{
+  display:grid;
+  grid-template-columns:1.5fr .8fr repeat(5,1fr);
+  gap:5px;
+}
+.v297-field{
+  display:grid;
+  gap:2px;
+  font-size:9px;
+  color:#50627a;
+  font-weight:850;
+}
+.v297-field span{white-space:nowrap}
+.v297-field em{
+  font-style:normal;
+  font-size:8px;
+  color:#8091a4;
+  margin-left:3px;
+}
+.v297-field input,.v297-field select{
+  height:23px;
+  border:1px solid #cbd8e7;
+  border-radius:2px;
+  background:#fff;
+  padding:0 5px;
+  color:#10243f;
+  font-size:10px;
+  min-width:0;
+}
+.v297-eval-kpis{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+}
+.v297-eval-kpis div{
+  border:1px solid #d4e0ec;
+  background:#f8fbff;
+  padding:6px 7px;
+  min-height:40px;
+}
+.v297-eval-kpis span{
+  display:block;
+  font-size:9px;
+  color:#6a7d92;
+}
+.v297-eval-kpis b{
+  display:block;
+  font-size:13px;
+  color:#10243f;
+  margin-top:2px;
+}
+.v297-eval-empty{
+  border:1px dashed #cbd8e7;
+  background:#f8fbff;
+  padding:10px;
+  color:#6a7d92;
+  min-height:80px;
+}
+.v297-eval-empty b{
+  display:block;
+  font-size:12px;
+  color:#10243f;
+}
+.v297-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  border-top:1px solid #e3edf6;
+  padding-top:5px;
+}
+.v297-actions button{
+  height:27px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  color:#263f5f;
+  font-weight:850;
+  padding:0 9px;
+}
+.v297-actions button.primary{
+  background:#1d5fd0;
+  border-color:#1d5fd0;
+  color:#fff;
+}
+/* Target acceptance line */
+.target-acceptance-v297{
+  border:1px solid #bdccdc;
+  background:#fbfdff;
+  border-radius:3px;
+  display:grid;
+  gap:8px;
+  padding:8px;
+  margin:8px 0;
+  box-shadow:0 1px 6px rgba(15,52,92,.06);
+}
+.target-acceptance-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid #e1eaf3;
+  padding-bottom:8px;
+}
+.target-acceptance-head.pass{box-shadow:inset 3px 0 0 #13a66f;padding-left:8px}
+.target-acceptance-head.review{box-shadow:inset 3px 0 0 #d48a09;padding-left:8px}
+.target-acceptance-head b{font-size:14px;color:#10243f}
+.target-acceptance-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.target-acceptance-verdict{
+  min-width:190px;
+  border:1px solid #c8d6e6;
+  background:#fff;
+  padding:7px 10px;
+  text-align:right;
+}
+.target-acceptance-verdict strong{display:block;font-size:22px;color:#0d55bd;line-height:24px}
+.target-acceptance-verdict small{font-size:10px;color:#6a7d92}
+.target-acceptance-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.target-acceptance-actions button{
+  height:28px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  font-weight:850;
+  color:#263f5f;
+  padding:0 10px;
+}
+.target-acceptance-actions .primary{
+  background:#1d5fd0;
+  color:#fff;
+  border-color:#1d5fd0;
+}
+.target-acceptance-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+.target-acceptance-kpis div{
+  border:1px solid #d4e0ec;
+  background:#fff;
+  padding:7px 9px;
+  border-left:2px solid #7c5cff;
+}
+.target-acceptance-kpis span{display:block;font-size:10px;color:#6a7d92}
+.target-acceptance-kpis b{font-size:18px;color:#10243f}
+.target-acceptance-table-wrap{
+  max-height:245px;
+  overflow:auto;
+  border:1px solid #d4e0ec;
+  background:#fff;
+}
+.target-acceptance-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+.target-acceptance-table th{
+  position:sticky;
+  top:0;
+  background:#edf4fb;
+  border:1px solid #d5e1ee;
+  height:28px;
+  color:#263e5e;
+}
+.target-acceptance-table td{
+  border:1px solid #e3edf6;
+  height:26px;
+  text-align:center;
+  padding:0 5px;
+}
+.target-acceptance-table td:nth-child(2),.target-acceptance-table td:last-child{text-align:left}
+.target-acceptance-table .row-pass td{background:#fbfffd}
+.target-acceptance-table .row-review td{background:#fffaf1}
+.stage-line-target{border-left-color:#7c5cff!important}
+@media(max-width:1500px){
+  .editor-content.v295-plan-editor.v297-target-editor{grid-template-rows:minmax(0,1fr) 210px 305px !important}
+  .v297-body{grid-template-columns:1fr;overflow:auto}
+  .v297-config-grid{grid-template-columns:repeat(3,1fr)}
+  .target-acceptance-kpis{grid-template-columns:repeat(2,1fr)}
+}

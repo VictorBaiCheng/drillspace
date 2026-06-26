@@ -1,9 +1,11 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body, Response, Response, Response, Response, Response, Response, Response, Response
+from fastapi import APIRouter, Body, Response, Response, Response, Response, Response, Response, Response, Response, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
 from app.services.planning_methods import method_templates, solve_planning_method
 from app.services.planning_acceptance import latest_planning_acceptance_report, list_planning_samples, planning_acceptance_csv, run_all_planning_samples, run_planning_sample
+from app.services.target_center import delete_target, evaluate_targets, get_target, line_up_target, list_targets, save_default_targets, solve_to_target, upsert_target
+from app.services.target_acceptance import latest_target_acceptance_report, list_target_acceptance_samples, run_all_target_acceptance_samples, run_target_acceptance_sample, target_acceptance_csv
 from app.services.acceptance_center import export_stage_acceptance_package, latest_stage_acceptance_summary, run_stage_acceptance, stage_summary_csv
 from app.services.collision_acceptance_samples import collision_acceptance_csv, collision_sample_csv, collision_sample_payload, latest_collision_acceptance_report, list_collision_samples, run_all_collision_samples, run_collision_sample, write_collision_sample_files
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
@@ -413,3 +415,68 @@ def planning_acceptance_report_csv():
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=drillspace_planning_acceptance_report.csv"}
     )
+
+
+@router.get("/api/well-path/targets")
+def target_list():
+    return data(list_targets("data/targets/target_library.json"))
+
+@router.post("/api/well-path/targets")
+def target_save(payload: Dict[str, Any] = Body(default={})):
+    return data(upsert_target(payload, "data/targets/target_library.json"))
+
+@router.post("/api/well-path/targets/defaults")
+def target_defaults():
+    return data(save_default_targets("data/targets/target_library.json"))
+
+@router.post("/api/well-path/targets/evaluate")
+def target_evaluate(payload: Dict[str, Any] = Body(default={})):
+    return data(evaluate_targets(payload, "data/targets/target_library.json"))
+
+@router.post("/api/well-path/planning/line-up-target")
+def planning_line_up_target(payload: Dict[str, Any] = Body(default={})):
+    return data(line_up_target(payload, "data/targets/target_library.json"))
+
+@router.post("/api/well-path/planning/solve-to-target")
+def planning_solve_to_target(payload: Dict[str, Any] = Body(default={})):
+    return data(solve_to_target(payload, "data/targets/target_library.json"))
+
+@router.get("/api/well-path/target-acceptance/samples")
+def target_acceptance_sample_list():
+    return data(list_target_acceptance_samples())
+
+@router.post("/api/well-path/target-acceptance/samples/{sample_id}/run")
+def target_acceptance_sample_run(sample_id: str):
+    return data(run_target_acceptance_sample(sample_id, save_dir="data/calibration"))
+
+@router.post("/api/well-path/target-acceptance/run-all")
+def target_acceptance_run_all():
+    return data(run_all_target_acceptance_samples("data/calibration"))
+
+@router.get("/api/well-path/target-acceptance/report")
+def target_acceptance_report():
+    return data(latest_target_acceptance_report("data/calibration/target_acceptance_report.json"))
+
+@router.get("/api/well-path/target-acceptance/report.csv")
+def target_acceptance_report_csv():
+    report = latest_target_acceptance_report("data/calibration/target_acceptance_report.json")
+    text = target_acceptance_csv(report)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_target_acceptance_report.csv"}
+    )
+
+@router.get("/api/well-path/targets/{target_id}")
+def target_get(target_id: str):
+    return data(get_target(target_id, "data/targets/target_library.json"))
+
+@router.put("/api/well-path/targets/{target_id}")
+def target_update(target_id: str, payload: Dict[str, Any] = Body(default={})):
+    payload = dict(payload or {})
+    payload["id"] = target_id
+    return data(upsert_target(payload, "data/targets/target_library.json"))
+
+@router.delete("/api/well-path/targets/{target_id}")
+def target_delete(target_id: str):
+    return data(delete_target(target_id, "data/targets/target_library.json"))

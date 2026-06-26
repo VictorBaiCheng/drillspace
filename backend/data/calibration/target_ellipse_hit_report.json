@@ -1,0 +1,99 @@
+{
+  "ok": true,
+  "sampleId": "ellipse_hit",
+  "sample": {
+    "id": "ellipse_hit",
+    "name": "02 椭圆靶区入靶样本",
+    "mode": "evaluate",
+    "targetId": "landing_point",
+    "targetName": "Landing Point / 着陆点",
+    "desc": "落点在椭圆靶区内。"
+  },
+  "expectedVerdict": "PASS",
+  "actualVerdict": "PASS",
+  "sampleVerdict": "PASS",
+  "row": {
+    "md": 4260,
+    "inc": 88.5,
+    "azi": 121.8,
+    "tvd": 3428,
+    "ns": 1948,
+    "ew": 1460
+  },
+  "target": {
+    "id": "landing_point",
+    "name": "Landing Point / 着陆点",
+    "type": "landing",
+    "tvd": 3420.0,
+    "ns": 1900.0,
+    "ew": 1450.0,
+    "verticalSection": 2385.0,
+    "radius": 30.0,
+    "ellipseMajor": 80.0,
+    "ellipseMinor": 30.0,
+    "entryInc": 88.5,
+    "entryAzi": 121.8,
+    "tolerance": 15.0,
+    "priority": "primary",
+    "enabled": true,
+    "remark": "水平段着陆约束"
+  },
+  "result": {
+    "ok": true,
+    "targetId": "landing_point",
+    "targetName": "Landing Point / 着陆点",
+    "targetType": "landing",
+    "row": {
+      "md": 4260,
+      "inc": 88.5,
+      "azi": 121.8,
+      "tvd": 3428,
+      "ns": 1948,
+      "ew": 1460
+    },
+    "target": {
+      "id": "landing_point",
+      "name": "Landing Point / 着陆点",
+      "type": "landing",
+      "tvd": 3420.0,
+      "ns": 1900.0,
+      "ew": 1450.0,
+      "verticalSection": 2385.0,
+      "radius": 30.0,
+      "ellipseMajor": 80.0,
+      "ellipseMinor": 30.0,
+      "entryInc": 88.5,
+      "entryAzi": 121.8,
+      "tolerance": 15.0,
+      "priority": "primary",
+      "enabled": true,
+      "remark": "水平段着陆约束"
+    },
+    "errors": {
+      "tvdError": 8.0,
+      "nsError": 48.0,
+      "ewError": 10.0,
+      "horizontalError": 49.0306,
+      "centerDistance3d": 49.679,
+      "ellipseValue": 0.471111
+    },
+    "limits": {
+      "radius": 30.0,
+      "ellipseMajor": 80.0,
+      "ellipseMinor": 30.0,
+      "tolerance": 15.0
+    },
+    "checks": {
+      "inCircle": false,
+      "inEllipse": true,
+      "tvdOk": true,
+      "inTarget": true,
+      "noGoZone": false
+    },
+    "status": "IN_TARGET",
+    "verdict": "PASS",
+    "generatedAt": "2026-06-26 22:57:47"
+  },
+  "recommendation": "通过",
+  "generatedAt": "2026-06-26 22:57:47"
+}

@@ -207,8 +207,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_dogleg_toolface_standard_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_dogleg_toolface_standard_report.json"
     },
     {
       "ok": true,
@@ -299,8 +299,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_build_turn_standard_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_build_turn_standard_report.json"
     },
     {
       "ok": true,
@@ -391,8 +391,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_hold_to_md_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_hold_to_md_report.json"
     },
     {
       "ok": true,
@@ -483,8 +483,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_hold_to_tvd_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_hold_to_tvd_report.json"
     },
     {
       "ok": true,
@@ -639,8 +639,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_slant_standard_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_slant_standard_report.json"
     },
     {
       "ok": true,
@@ -859,8 +859,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_s_well_standard_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_s_well_standard_report.json"
     },
     {
       "ok": true,
@@ -951,8 +951,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_nudge_md_inc_azi_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_nudge_md_inc_azi_report.json"
     },
     {
       "ok": true,
@@ -1043,8 +1043,8 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_landing_plane_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_landing_plane_report.json"
     },
     {
       "ok": true,
@@ -1135,10 +1135,10 @@
       },
       "errors": [],
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:34:53",
-      "savedReport": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/calibration/planning_line_up_target_report.json"
+      "generatedAt": "2026-06-26 22:57:47",
+      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/planning_line_up_target_report.json"
     }
   ],
-  "generatedAt": "2026-06-26 22:34:53",
+  "generatedAt": "2026-06-26 22:57:47",
   "note": "Planning acceptance line verifies Slant, S Well, Build Turn, Dogleg Toolface, Hold, Optimum Align/Nudge and Section Type workflows."
 }

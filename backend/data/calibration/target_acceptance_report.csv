@@ -1,0 +1,8 @@
+﻿sampleId,name,mode,targetId,targetName,expectedVerdict,actualVerdict,sampleVerdict,recommendation
+circle_hit,01 圆形靶区入靶样本,evaluate,target_center,Target Center / 靶心,PASS,PASS,PASS,通过
+ellipse_hit,02 椭圆靶区入靶样本,evaluate,landing_point,Landing Point / 着陆点,PASS,PASS,PASS,通过
+miss_offset,03 未入靶偏差样本,evaluate,target_center,Target Center / 靶心,REVIEW,REVIEW,PASS,通过
+no_go_clear,04 避让区安全样本,evaluate,no_go_fault,No-Go Zone / 避让区,PASS,PASS,PASS,通过
+line_up_target,05 Line up on Target 样本,lineUp,target_center,Target Center / 靶心,PASS,PASS,PASS,通过
+landing_plane_target,06 Landing Plane 目标样本,solve,landing_point,Landing Point / 着陆点,PASS,PASS,PASS,通过
+optimum_align_target,07 Optimum Align 目标样本,solve,pbhl,PBHL / 设计井底,PASS,PASS,PASS,通过

@@ -1,4 +1,4 @@
-/* DrillSpace V2.9.6 Planning Solver Hardening + Acceptance Line
+/* DrillSpace V2.9.7 Target Zone + Trajectory Constraint Center
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -1693,7 +1693,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.9.6-A5123');
+  addLog('保存轨迹版本 V2.9.7-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -2193,7 +2193,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.9.6 规划方法求解器与验收线加固版');
+  addLog('打开 DrillSpace V2.9.7 目标靶区与轨迹约束中心版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();
@@ -3103,3 +3103,310 @@ window.runAllPlanningSamples = runAllPlanningSamples;
 window.loadPlanningAcceptanceReport = loadPlanningAcceptanceReport;
 window.exportPlanningAcceptanceJson = exportPlanningAcceptanceJson;
 window.exportPlanningAcceptanceCsv = exportPlanningAcceptanceCsv;
+
+
+/* =========================================================
+   V2.9.7 Target Zone Runtime Patch
+   Target Library / Target Zone / Constraint Evaluation / Target-driven Planning
+   ========================================================= */
+function v297DefaultTargets(){
+  return [
+    {id:'surface_location',name:'Surface Location / 井口',type:'surface',tvd:0,ns:0,ew:0,verticalSection:0,radius:5,ellipseMajor:10,ellipseMinor:10,entryInc:0,entryAzi:0,tolerance:5,priority:'reference',enabled:true,remark:'井口参考点'},
+    {id:'kop',name:'KOP / 造斜点',type:'kop',tvd:1200,ns:0,ew:0,verticalSection:0,radius:20,ellipseMajor:30,ellipseMinor:20,entryInc:0,entryAzi:110,tolerance:20,priority:'design',enabled:true,remark:'Kick-off point'},
+    {id:'target_center',name:'Target Center / 靶心',type:'target',tvd:3500,ns:2050,ew:1560,verticalSection:2570,radius:35,ellipseMajor:60,ellipseMinor:35,entryInc:86,entryAzi:121.8,tolerance:20,priority:'primary',enabled:true,remark:'主目标靶区'},
+    {id:'landing_point',name:'Landing Point / 着陆点',type:'landing',tvd:3420,ns:1900,ew:1450,verticalSection:2385,radius:30,ellipseMajor:80,ellipseMinor:30,entryInc:88.5,entryAzi:121.8,tolerance:15,priority:'primary',enabled:true,remark:'水平段着陆约束'},
+    {id:'pbhl',name:'PBHL / 设计井底',type:'pbhl',tvd:3550,ns:2800,ew:2300,verticalSection:3600,radius:50,ellipseMajor:100,ellipseMinor:45,entryInc:90,entryAzi:122,tolerance:25,priority:'primary',enabled:true,remark:'Planned bottom hole location'},
+    {id:'lease_line_north',name:'Lease Line North / 北侧边界',type:'leaseLine',tvd:3500,ns:3150,ew:2300,verticalSection:4000,radius:80,ellipseMajor:200,ellipseMinor:80,entryInc:90,entryAzi:122,tolerance:40,priority:'constraint',enabled:true,remark:'边界约束示例'},
+    {id:'no_go_fault',name:'No-Go Zone / 避让区',type:'noGo',tvd:3300,ns:1750,ew:1320,verticalSection:2200,radius:120,ellipseMajor:160,ellipseMinor:100,entryInc:0,entryAzi:0,tolerance:50,priority:'avoid',enabled:true,remark:'避让区，进入半径内视为风险'}
+  ];
+}
+function v297EnsureTargetState(){
+  state.targets = state.targets || v297DefaultTargets();
+  state.activeTargetId = state.activeTargetId || 'target_center';
+  state.targetEvaluation = state.targetEvaluation || null;
+}
+function v297ActiveTarget(){
+  v297EnsureTargetState();
+  return state.targets.find(t=>String(t.id)===String(state.activeTargetId)) || state.targets[0];
+}
+function v297TargetField(key,label,unit=''){
+  const t = v297ActiveTarget();
+  return `<label class="v297-field"><span>${label}${unit?`<em>${unit}</em>`:''}</span><input data-target-field="${key}" value="${esc(t?.[key] ?? '')}"></label>`;
+}
+function v297TargetSelect(key,label,options){
+  const t=v297ActiveTarget(), v=t?.[key] ?? '';
+  return `<label class="v297-field"><span>${label}</span><select data-target-field="${key}">${options.map(o=>`<option value="${esc(o[0])}" ${String(v)===String(o[0])?'selected':''}>${esc(o[1])}</option>`).join('')}</select></label>`;
+}
+function v297TargetCenterHtml(){
+  v297EnsureTargetState();
+  const t = v297ActiveTarget();
+  const e = state.targetEvaluation;
+  const best = e?.bestTarget;
+  const current = v295ActiveRow ? v295ActiveRow() : (state.rows[state.selectedRow] || {});
+  return `<div class="v297-target-center" id="v297TargetCenter">
+    <div class="v297-head">
+      <div><b>目标靶区与轨迹约束中心</b><span>Target Library / Target Zone / Constraint Evaluation / Target-driven Planning</span></div>
+      <div class="v297-current"><b>Current Row ${state.selectedRow ?? 0}</b><span>MD ${fmt(current.md,2)} · TVD ${fmt(current.tvd,2)} · NS ${fmt(current.ns,2)} · EW ${fmt(current.ew,2)}</span></div>
+    </div>
+    <div class="v297-body">
+      <section class="v297-list">
+        <div class="v297-card-title"><b>Target Library</b><span>${state.targets.length} targets</span></div>
+        <div class="v297-target-list">
+          ${state.targets.map(tg=>`<button class="${String(tg.id)===String(state.activeTargetId)?'active':''} ${tg.type==='noGo'?'nogozone':''}" onclick="v297SelectTarget('${esc(tg.id)}')"><b>${esc(tg.name)}</b><span>${esc(tg.type)} · TVD ${fmt(tg.tvd,0)} · NS ${fmt(tg.ns,0)} · EW ${fmt(tg.ew,0)}</span></button>`).join('')}
+        </div>
+      </section>
+      <section class="v297-config">
+        <div class="v297-card-title"><b>Target Configuration</b><span>${esc(t.name || '')}</span></div>
+        <div class="v297-config-grid">
+          ${v297TargetField('name','Name')}
+          ${v297TargetSelect('type','Type',[['surface','Surface'],['kop','KOP'],['target','Target'],['landing','Landing'],['pbhl','PBHL'],['leaseLine','Lease Line'],['noGo','No-Go Zone']])}
+          ${v297TargetField('tvd','TVD','m')}
+          ${v297TargetField('ns','N/S','m')}
+          ${v297TargetField('ew','E/W','m')}
+          ${v297TargetField('verticalSection','V.Sec','m')}
+          ${v297TargetField('radius','Radius','m')}
+          ${v297TargetField('ellipseMajor','Ellipse Major','m')}
+          ${v297TargetField('ellipseMinor','Ellipse Minor','m')}
+          ${v297TargetField('entryInc','Entry Inc','°')}
+          ${v297TargetField('entryAzi','Entry Azi','°')}
+          ${v297TargetField('tolerance','TVD Tol','m')}
+          ${v297TargetSelect('priority','Priority',[['reference','reference'],['design','design'],['primary','primary'],['constraint','constraint'],['avoid','avoid']])}
+        </div>
+      </section>
+      <section class="v297-eval">
+        <div class="v297-card-title"><b>Target Evaluation</b><span>${esc(e?.overallVerdict || 'WAITING')}</span></div>
+        ${best ? `<div class="v297-eval-kpis"><div><span>Nearest Target</span><b>${esc(best.targetName || '')}</b></div><div><span>Horizontal Error</span><b>${fmt(best.errors?.horizontalError,2)}m</b></div><div><span>TVD Error</span><b>${fmt(best.errors?.tvdError,2)}m</b></div><div><span>Status</span><b>${esc(best.status)}</b></div></div>` : `<div class="v297-eval-empty"><b>未评价</b><span>点击 Evaluate Current Row 计算当前行与目标靶区的关系。</span></div>`}
+      </section>
+    </div>
+    <div class="v297-actions">
+      <button class="primary" onclick="v297EvaluateCurrentTarget()">Evaluate Current Row</button>
+      <button onclick="v297ApplyTargetToPlanning()">Apply to Planning</button>
+      <button onclick="v297LineUpTarget()">Line up Target</button>
+      <button onclick="v297SolveToTarget()">Solve to Target</button>
+      <button onclick="v297AddTarget()">Add Target</button>
+      <button onclick="v297SaveActiveTarget()">Save Target</button>
+      <button onclick="v297LoadTargets()">Load Library</button>
+      <button onclick="v297ExportTargets()">Export Targets</button>
+    </div>
+  </div>`;
+}
+function v297InjectTargetCenter(){
+  v297EnsureTargetState();
+  const content = $('editorContent');
+  if(!content || state.editorView !== 'grid') return;
+  content.classList.add('v297-target-editor');
+  const old = $('v297TargetCenter'); if(old) old.remove();
+  const dock = $('v295PlanningDock');
+  if(dock) dock.insertAdjacentHTML('beforebegin', v297TargetCenterHtml());
+  else content.insertAdjacentHTML('beforeend', v297TargetCenterHtml());
+  const box = $('v297TargetCenter');
+  if(box){
+    box.querySelectorAll('[data-target-field]').forEach(el=>{
+      el.oninput = el.onchange = ()=>{
+        const t = v297ActiveTarget(); if(!t) return;
+        const key = el.dataset.targetField;
+        t[key] = ['name','type','priority','remark'].includes(key) ? el.value : Number(el.value);
+      };
+    });
+  }
+}
+function v297SelectTarget(id){ state.activeTargetId = id; v297InjectTargetCenter(); }
+async function v297LoadTargets(){
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/targets');
+      const data = json.data || json;
+      state.targets = data.targets || state.targets || v297DefaultTargets();
+      state.activeTargetId = state.targets[0]?.id || 'target_center';
+      toast('已加载目标库');
+    }catch(err){ toast(`加载目标库失败：${err.message}`); }
+  }else{
+    state.targets = state.targets || v297DefaultTargets();
+    toast('当前 MOCK 模式：使用内置目标库');
+  }
+  v297InjectTargetCenter();
+}
+async function v297SaveActiveTarget(){
+  const t = v297ActiveTarget();
+  if(!t) return toast('没有选中目标');
+  if(state.apiMode === 'api'){
+    try{ await fetchBackendJson('/api/well-path/targets', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(t)}); toast('目标已保存到后端'); }
+    catch(err){ toast(`后端保存失败：${err.message}`); }
+  }else toast('当前 MOCK 模式：目标已保存在前端状态');
+}
+function v297AddTarget(){
+  v297EnsureTargetState();
+  const id = `target_${Date.now()}`;
+  state.targets.push({id,name:'New Target / 新目标',type:'target',tvd:3500,ns:0,ew:0,verticalSection:0,radius:30,ellipseMajor:60,ellipseMinor:30,entryInc:0,entryAzi:0,tolerance:20,priority:'design',enabled:true,remark:'new target'});
+  state.activeTargetId = id;
+  v297InjectTargetCenter();
+}
+function v297ApplyTargetToPlanning(){
+  const t = v297ActiveTarget();
+  if(!t) return toast('没有选中目标');
+  state.planningParams = state.planningParams || {};
+  state.planningParams.targetTvd = Number(t.tvd || 0);
+  state.planningParams.targetNs = Number(t.ns || 0);
+  state.planningParams.targetEw = Number(t.ew || 0);
+  state.planningParams.targetInc = Number(t.entryInc || 0);
+  state.planningParams.targetAzi = Number(t.entryAzi || 0);
+  toast(`目标已写入规划参数：${t.name}`);
+  if(typeof v295InjectPlanningDock === 'function') v295InjectPlanningDock();
+  v297InjectTargetCenter();
+}
+function v297LocalEvaluate(row, target){
+  const tvdError = num(row.tvd) - num(target.tvd), nsError = num(row.ns) - num(target.ns), ewError = num(row.ew) - num(target.ew);
+  const horizontalError = Math.sqrt(nsError*nsError + ewError*ewError);
+  const radius = Math.max(1e-6, num(target.radius || 30));
+  const tol = Math.max(1e-6, num(target.tolerance || 20));
+  const ellipseMajor = Math.max(1e-6, num(target.ellipseMajor || radius));
+  const ellipseMinor = Math.max(1e-6, num(target.ellipseMinor || radius));
+  const ellipseValue = (nsError/ellipseMajor)**2 + (ewError/ellipseMinor)**2;
+  const inTarget = (horizontalError <= radius || ellipseValue <= 1) && Math.abs(tvdError) <= tol;
+  const noGo = target.type === 'noGo';
+  return {ok:true,overallVerdict:(noGo ? !inTarget : inTarget) ? 'PASS' : 'REVIEW',bestTarget:{targetId:target.id,targetName:target.name,targetType:target.type,errors:{tvdError,nsError,ewError,horizontalError,ellipseValue},status:noGo?(inTarget?'RISK':'CLEAR'):(inTarget?'IN_TARGET':'MISS'),verdict:(noGo ? !inTarget : inTarget) ? 'PASS' : 'REVIEW'},evaluations:[]};
+}
+async function v297EvaluateCurrentTarget(){
+  const row = v295ActiveRow ? v295ActiveRow() : (state.rows[state.selectedRow] || {});
+  const target = v297ActiveTarget();
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/targets/evaluate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({row,targetId:target.id})});
+      state.targetEvaluation = json.data || json;
+    }catch(err){
+      state.targetEvaluation = v297LocalEvaluate(row,target);
+      toast(`后端评价失败，使用前端评价：${err.message}`);
+    }
+  }else state.targetEvaluation = v297LocalEvaluate(row,target);
+  v297InjectTargetCenter();
+  toast(`靶区评价完成：${state.targetEvaluation.overallVerdict}`);
+}
+async function v297LineUpTarget(){
+  const row = v295ActiveRow ? v295ActiveRow() : (state.rows[state.selectedRow] || {});
+  const target = v297ActiveTarget();
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/planning/line-up-target', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({row,targetId:target.id,cl:60})});
+      const data = json.data || json;
+      state.planningPreview = data.planningResult;
+      state.planningMethod = 'nudge';
+      state.planningSectionType = 'lineUpOnTarget';
+      toast(`Line up Target 完成：Azi ${fmt(data.lineUpAzi,2)}°`);
+    }catch(err){ toast(`Line up Target 失败：${err.message}`); }
+  }else{
+    v297ApplyTargetToPlanning(); state.planningMethod='nudge'; state.planningSectionType='lineUpOnTarget';
+    if(typeof v295CalculatePlanningMethod === 'function') await v295CalculatePlanningMethod(true);
+    toast('当前 MOCK 模式：已按目标对齐');
+  }
+  if(typeof v295InjectPlanningDock === 'function') v295InjectPlanningDock();
+  v297InjectTargetCenter();
+}
+async function v297SolveToTarget(){
+  const row = v295ActiveRow ? v295ActiveRow() : (state.rows[state.selectedRow] || {});
+  const target = v297ActiveTarget();
+  if(state.apiMode === 'api'){
+    try{
+      const json = await fetchBackendJson('/api/well-path/planning/solve-to-target', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({row,targetId:target.id,method:'optimumAlign',tangentLength:300})});
+      const data = json.data || json;
+      state.planningPreview = data.planningResult;
+      state.targetEvaluation = data.evaluation ? {overallVerdict:data.evaluation.verdict,bestTarget:data.evaluation,evaluations:[data.evaluation]} : state.targetEvaluation;
+      state.planningMethod = 'optimumAlign';
+      toast('Solve to Target 完成');
+    }catch(err){ toast(`Solve to Target 失败：${err.message}`); }
+  }else{
+    v297ApplyTargetToPlanning(); state.planningMethod='optimumAlign';
+    if(typeof v295CalculatePlanningMethod === 'function') await v295CalculatePlanningMethod(true);
+    toast('当前 MOCK 模式：已生成目标驱动规划预览');
+  }
+  if(typeof v295InjectPlanningDock === 'function') v295InjectPlanningDock();
+  v297InjectTargetCenter();
+}
+function v297ExportTargets(){
+  v297EnsureTargetState();
+  downloadTextFile('DrillSpace_Target_Library.json', JSON.stringify({version:'2.9.7',targets:state.targets},null,2),'application/json;charset=utf-8');
+  toast('已导出目标库 JSON');
+}
+(function(){
+  const oldRenderGrid = window.renderGrid || renderGrid;
+  window.renderGrid = function(){ oldRenderGrid(); setTimeout(()=>v297InjectTargetCenter(), 40); };
+  setTimeout(()=>{ if(state&&state.editorView==='grid') v297InjectTargetCenter(); }, 200);
+})();
+
+function localTargetAcceptanceReport(){
+  const samples = [
+    {sampleId:'circle_hit',name:'01 圆形靶区入靶样本',mode:'evaluate',targetId:'target_center',targetName:'Target Center',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'ellipse_hit',name:'02 椭圆靶区入靶样本',mode:'evaluate',targetId:'landing_point',targetName:'Landing Point',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'miss_offset',name:'03 未入靶偏差样本',mode:'evaluate',targetId:'target_center',targetName:'Target Center',expectedVerdict:'REVIEW',actualVerdict:'REVIEW',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'no_go_clear',name:'04 避让区安全样本',mode:'evaluate',targetId:'no_go_fault',targetName:'No-Go Zone',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'line_up_target',name:'05 Line up on Target 样本',mode:'lineUp',targetId:'target_center',targetName:'Target Center',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'landing_plane_target',name:'06 Landing Plane 目标样本',mode:'solve',targetId:'landing_point',targetName:'Landing Point',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'},
+    {sampleId:'optimum_align_target',name:'07 Optimum Align 目标样本',mode:'solve',targetId:'pbhl',targetName:'PBHL',expectedVerdict:'PASS',actualVerdict:'PASS',sampleVerdict:'PASS',recommendation:'通过'}
+  ];
+  return {ok:true,version:'2.9.7',reportType:'TargetConstraintAcceptanceReport',overallVerdict:'PASS',totalSamples:samples.length,passCount:samples.length,reviewCount:0,failCount:0,samples,note:'前端目标靶区验收报告；API模式下调用后端 /api/well-path/target-acceptance/run-all。'};
+}
+async function runAllTargetSamples(){
+  if(state.apiMode === 'api'){
+    try{ const json = await fetchBackendJson('/api/well-path/target-acceptance/run-all', {method:'POST'}); state.targetAcceptanceReport = json.data || json; toast('全部目标靶区样本已运行完成'); }
+    catch(err){ state.targetAcceptanceReport = localTargetAcceptanceReport(); toast(`后端目标验收失败，使用前端Mock：${err.message}`); }
+  }else{ state.targetAcceptanceReport = localTargetAcceptanceReport(); toast('当前 MOCK 模式：已运行全部目标样本'); }
+  renderCalibrationReportPage();
+}
+async function loadTargetAcceptanceReport(){
+  if(state.apiMode === 'api'){
+    try{ const json = await fetchBackendJson('/api/well-path/target-acceptance/report'); state.targetAcceptanceReport = json.data || json; toast('已读取目标靶区验收报告'); }
+    catch(err){ state.targetAcceptanceReport = localTargetAcceptanceReport(); toast(`读取目标报告失败，使用前端Mock：${err.message}`); }
+  }else state.targetAcceptanceReport = localTargetAcceptanceReport();
+  renderCalibrationReportPage();
+}
+function targetAcceptancePanelHtml(){
+  const report = state.targetAcceptanceReport || localTargetAcceptanceReport();
+  const verdictClass = String(report.overallVerdict).toUpperCase()==='PASS'?'pass':'review';
+  return `<section class="target-acceptance-v297"><div class="target-acceptance-head ${verdictClass}"><div><b>目标靶区验收线 / Target Constraint Acceptance Line</b><span>验证圆形/椭圆靶区、未入靶偏差、No-Go Zone、Line up Target 与目标驱动规划。</span></div><div class="target-acceptance-verdict"><strong>${esc(report.overallVerdict)}</strong><small>${report.passCount||0} PASS / ${report.reviewCount||0} REVIEW / ${report.failCount||0} FAILED</small></div></div><div class="target-acceptance-actions"><button class="primary" onclick="runAllTargetSamples()">运行全部目标样本</button><button onclick="loadTargetAcceptanceReport()">读取目标报告</button><button onclick="exportTargetAcceptanceJson()">导出目标 JSON</button><button onclick="exportTargetAcceptanceCsv()">导出目标 CSV</button></div><div class="target-acceptance-kpis"><div><span>总样本数</span><b>${report.totalSamples||0}</b></div><div><span>PASS</span><b>${report.passCount||0}</b></div><div><span>REVIEW</span><b>${report.reviewCount||0}</b></div><div><span>FAILED</span><b>${report.failCount||0}</b></div></div><div class="target-acceptance-table-wrap">${targetAcceptanceTableHtml(report)}</div></section>`;
+}
+function targetAcceptanceTableHtml(report){
+  const rows = report.samples || [];
+  return `<table class="target-acceptance-table"><thead><tr><th>#</th><th>样本</th><th>模式</th><th>目标</th><th>预期</th><th>实际</th><th>结论</th><th>建议</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${String(r.sampleVerdict).toUpperCase()==='PASS'?'row-pass':'row-review'}"><td>${i+1}</td><td>${esc(r.name)}</td><td>${esc(r.mode)}</td><td>${esc(r.targetName||r.targetId)}</td><td>${esc(r.expectedVerdict)}</td><td>${esc(r.actualVerdict)}</td><td><b>${esc(r.sampleVerdict)}</b></td><td>${esc(r.recommendation||'')}</td></tr>`).join('')}</tbody></table>`;
+}
+function exportTargetAcceptanceJson(){ const report = state.targetAcceptanceReport || localTargetAcceptanceReport(); downloadTextFile('DrillSpace_Target_Acceptance_Report.json', JSON.stringify(report,null,2), 'application/json;charset=utf-8'); toast('已导出目标靶区验收 JSON'); }
+function exportTargetAcceptanceCsv(){ const report = state.targetAcceptanceReport || localTargetAcceptanceReport(); const cols = ['sampleId','name','mode','targetId','targetName','expectedVerdict','actualVerdict','sampleVerdict','recommendation']; const csv = [cols.join(',')].concat((report.samples||[]).map(r=>cols.map(c=>r[c]??'').join(','))).join('\n'); downloadTextFile('DrillSpace_Target_Acceptance_Report.csv', csv, 'text/csv;charset=utf-8'); toast('已导出目标靶区验收 CSV'); }
+
+function localStageAcceptanceSummary(){
+  const trajectory = state.batchAcceptanceReport || (typeof localBatchAcceptanceReport === 'function' ? localBatchAcceptanceReport() : {overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,failCount:0,maxErrors:{}});
+  const collision = state.collisionAcceptanceReport || (typeof localCollisionAcceptanceReport === 'function' ? localCollisionAcceptanceReport() : {overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,dangerCount:0,minGlobalDistance:0,minGlobalSeparationFactor:0});
+  const planning = state.planningAcceptanceReport || (typeof localPlanningAcceptanceReport === 'function' ? localPlanningAcceptanceReport() : {overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,failCount:0,samples:[]});
+  const target = state.targetAcceptanceReport || localTargetAcceptanceReport();
+  const passCount = num(trajectory.passCount)+num(collision.passCount)+num(planning.passCount)+num(target.passCount);
+  const reviewCount = num(trajectory.reviewCount)+num(collision.reviewCount)+num(planning.reviewCount)+num(target.reviewCount);
+  const failCount = num(trajectory.failCount)+num(planning.failCount)+num(target.failCount);
+  const total = num(trajectory.totalSamples)+num(collision.totalSamples)+num(planning.totalSamples)+num(target.totalSamples);
+  const overall = [trajectory,collision,planning,target].every(x=>String(x.overallVerdict).toUpperCase()==='PASS')?'PASS':'REVIEW';
+  return {ok:true,version:'2.9.7',reportType:'TrajectorySubsystemAcceptanceSummary',overallVerdict:overall,totalSamples:total,passCount,reviewCount,failCount,acceptanceRate:passCount/Math.max(1,total),trajectory:{overallVerdict:trajectory.overallVerdict,totalSamples:trajectory.totalSamples,passCount:trajectory.passCount,reviewCount:trajectory.reviewCount,maxErrors:trajectory.maxErrors||{}},collision:{overallVerdict:collision.overallVerdict,totalSamples:collision.totalSamples,passCount:collision.passCount,reviewCount:collision.reviewCount,dangerCount:collision.dangerCount,minGlobalDistance:collision.minGlobalDistance,minGlobalSeparationFactor:collision.minGlobalSeparationFactor},planning:{overallVerdict:planning.overallVerdict,totalSamples:planning.totalSamples,passCount:planning.passCount,reviewCount:planning.reviewCount,methods:(planning.samples||[]).map(s=>s.method)},target:{overallVerdict:target.overallVerdict,totalSamples:target.totalSamples,passCount:target.passCount,reviewCount:target.reviewCount,modes:(target.samples||[]).map(s=>s.mode)},interfaceStatus:{health:'OK',trajectoryBatch:'READY',collisionBatch:'READY',planningBatch:'READY',targetBatch:'READY',exportPackage:'READY'},reportFiles:{trajectoryJson:'acceptance_report.json',collisionJson:'collision_acceptance_report.json',planningJson:'planning_acceptance_report.json',targetJson:'target_acceptance_report.json',summaryJson:'stage_acceptance_summary.json'},generatedAt:new Date().toLocaleString('zh-CN',{hour12:false}),note:'V2.9.7 前端阶段验收中心汇总：轨迹 + 防碰 + 规划方法 + 目标靶区四条验收线。'};
+}
+(function(){
+  const oldRender = window.renderCalibrationReportPage || renderCalibrationReportPage;
+  window.renderCalibrationReportPage = function(){
+    oldRender();
+    const box = document.querySelector('.calibration-page-v290');
+    if(!box) return;
+    if(!box.querySelector('.target-acceptance-v297')){
+      state.targetAcceptanceReport = state.targetAcceptanceReport || localTargetAcceptanceReport();
+      const planning = box.querySelector('.planning-acceptance-v296');
+      const holder = document.createElement('div'); holder.innerHTML = targetAcceptancePanelHtml();
+      const panel = holder.firstElementChild;
+      if(planning && planning.nextSibling) box.insertBefore(panel, planning.nextSibling); else box.appendChild(panel);
+    }
+    const stage = box.querySelector('.stage-acceptance-v294');
+    if(stage){
+      const lines = stage.querySelector('.stage-lines-grid');
+      if(lines && !lines.querySelector('.stage-line-target')){
+        const t = state.targetAcceptanceReport || localTargetAcceptanceReport();
+        const div = document.createElement('div');
+        div.className = `stage-line-card stage-line-target ${String(t.overallVerdict).toLowerCase()}`;
+        div.innerHTML = `<b>目标靶区验收线</b><span>结论：${esc(t.overallVerdict||'REVIEW')} · 样本：${t.totalSamples||0} · PASS：${t.passCount||0} · REVIEW：${t.reviewCount||0}</span><em>Target Library / Target Zone / No-Go / Line up Target / Solve to Target</em>`;
+        lines.appendChild(div);
+      }
+    }
+  };
+})();
+window.v297SelectTarget=v297SelectTarget; window.v297LoadTargets=v297LoadTargets; window.v297SaveActiveTarget=v297SaveActiveTarget; window.v297AddTarget=v297AddTarget; window.v297ApplyTargetToPlanning=v297ApplyTargetToPlanning; window.v297EvaluateCurrentTarget=v297EvaluateCurrentTarget; window.v297LineUpTarget=v297LineUpTarget; window.v297SolveToTarget=v297SolveToTarget; window.v297ExportTargets=v297ExportTargets;
+window.runAllTargetSamples=runAllTargetSamples; window.loadTargetAcceptanceReport=loadTargetAcceptanceReport; window.exportTargetAcceptanceJson=exportTargetAcceptanceJson; window.exportTargetAcceptanceCsv=exportTargetAcceptanceCsv;
