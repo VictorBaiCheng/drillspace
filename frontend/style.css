@@ -1702,3 +1702,113 @@ button{transition:background .12s ease,border-color .12s ease,box-shadow .12s ea
   .v295-planning-body{grid-template-columns:1fr;overflow:auto}
   .v295-form-grid,.v295-form-grid.dogleg,.v295-form-grid.nudge{grid-template-columns:repeat(3,1fr)}
 }
+
+
+/* =========================================================
+   DrillSpace V2.9.6 Planning Solver Hardening + Acceptance Line
+   规划方法验收线
+   ========================================================= */
+.planning-acceptance-v296{
+  border:1px solid #bdccdc;
+  background:#fbfdff;
+  border-radius:3px;
+  display:grid;
+  gap:8px;
+  padding:8px;
+  margin:8px 0;
+  box-shadow:0 1px 6px rgba(15,52,92,.06);
+}
+.planning-acceptance-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid #e1eaf3;
+  padding-bottom:8px;
+}
+.planning-acceptance-head.pass{box-shadow:inset 3px 0 0 #13a66f;padding-left:8px}
+.planning-acceptance-head.review{box-shadow:inset 3px 0 0 #d48a09;padding-left:8px}
+.planning-acceptance-head b{font-size:14px;color:#10243f}
+.planning-acceptance-head span{display:block;font-size:10px;color:#6a7d92;margin-top:2px}
+.planning-acceptance-verdict{
+  min-width:190px;
+  border:1px solid #c8d6e6;
+  background:#fff;
+  padding:7px 10px;
+  text-align:right;
+}
+.planning-acceptance-verdict strong{display:block;font-size:22px;color:#0d55bd;line-height:24px}
+.planning-acceptance-verdict small{font-size:10px;color:#6a7d92}
+.planning-acceptance-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.planning-acceptance-actions button{
+  height:28px;
+  border:1px solid #c7d5e4;
+  background:#fff;
+  border-radius:2px;
+  font-weight:850;
+  color:#263f5f;
+  padding:0 10px;
+}
+.planning-acceptance-actions .primary{
+  background:#1d5fd0;
+  color:#fff;
+  border-color:#1d5fd0;
+}
+.planning-acceptance-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+.planning-acceptance-kpis div{
+  border:1px solid #d4e0ec;
+  background:#fff;
+  padding:7px 9px;
+  border-left:2px solid #9fc2ef;
+}
+.planning-acceptance-kpis span{
+  display:block;
+  font-size:10px;
+  color:#6a7d92;
+}
+.planning-acceptance-kpis b{
+  font-size:18px;
+  color:#10243f;
+}
+.planning-acceptance-table-wrap{
+  max-height:245px;
+  overflow:auto;
+  border:1px solid #d4e0ec;
+  background:#fff;
+}
+.planning-acceptance-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+.planning-acceptance-table th{
+  position:sticky;
+  top:0;
+  background:#edf4fb;
+  border:1px solid #d5e1ee;
+  height:28px;
+  color:#263e5e;
+}
+.planning-acceptance-table td{
+  border:1px solid #e3edf6;
+  height:26px;
+  text-align:center;
+  padding:0 5px;
+}
+.planning-acceptance-table td:nth-child(2),.planning-acceptance-table td:last-child{
+  text-align:left;
+}
+.planning-acceptance-table .row-pass td{background:#fbfffd}
+.planning-acceptance-table .row-review td{background:#fffaf1}
+.stage-line-planning{border-left-color:#7c5cff!important}
+@media(max-width:1500px){
+  .planning-acceptance-kpis{grid-template-columns:repeat(2,1fr)}
+}

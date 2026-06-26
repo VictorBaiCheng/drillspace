@@ -1,0 +1,10 @@
+﻿sampleId,name,method,sectionType,expectedRows,actualRows,expectedStatus,actualStatus,sampleVerdict,recommendation
+dogleg_toolface_standard,01 Dogleg Toolface 标准样本,doglegToolface,incAziMd,1,1,READY,READY,PASS,通过
+build_turn_standard,02 Build Turn 标准样本,buildTurn,incAziMd,1,1,READY,READY,PASS,通过
+hold_to_md,03 Hold to MD 样本,hold,incAziMd,1,1,READY,READY,PASS,通过
+hold_to_tvd,04 Hold to TVD 样本,hold,tvdIncAzi,1,1,READY,READY,PASS,通过
+slant_standard,05 Slant 样本,slant,incAziMd,3,3,READY,READY,PASS,通过
+s_well_standard,06 S Well 样本,sWell,incAziMd,5,5,READY,READY,PASS,通过
+nudge_md_inc_azi,07 Nudge MD/INC/AZI 样本,nudge,incAziMd,1,1,READY,READY,PASS,通过
+landing_plane,08 Landing Plane 样本,nudge,landingPlane,1,1,READY,READY,PASS,通过
+line_up_target,09 Line up on Target 样本,nudge,lineUpOnTarget,1,1,READY,READY,PASS,通过

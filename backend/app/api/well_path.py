@@ -1,8 +1,9 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Body, Response, Response, Response, Response, Response, Response
+from fastapi import APIRouter, Body, Response, Response, Response, Response, Response, Response, Response, Response
 from app.services.wellpath_engine import chart_series, design_template, minimum_curvature, source_rows_from_payload
 from app.services.collision_engine import collision_scan
 from app.services.planning_methods import method_templates, solve_planning_method
+from app.services.planning_acceptance import latest_planning_acceptance_report, list_planning_samples, planning_acceptance_csv, run_all_planning_samples, run_planning_sample
 from app.services.acceptance_center import export_stage_acceptance_package, latest_stage_acceptance_summary, run_stage_acceptance, stage_summary_csv
 from app.services.collision_acceptance_samples import collision_acceptance_csv, collision_sample_csv, collision_sample_payload, latest_collision_acceptance_report, list_collision_samples, run_all_collision_samples, run_collision_sample, write_collision_sample_files
 from app.services.mydrill_calibration import CALIBRATION_COLUMNS, compare_reference, parse_csv_text, rows_to_csv, sample_reference_rows
@@ -383,3 +384,32 @@ def planning_calculate_next(payload: Dict[str, Any] = Body(default={})):
 @router.post("/api/well-path/planning/insert-section")
 def planning_insert_section(payload: Dict[str, Any] = Body(default={})):
     return data(solve_planning_method(payload))
+
+
+
+
+@router.get("/api/well-path/planning-acceptance/samples")
+def planning_acceptance_sample_list():
+    return data(list_planning_samples())
+
+@router.post("/api/well-path/planning-acceptance/samples/{sample_id}/run")
+def planning_acceptance_sample_run(sample_id: str):
+    return data(run_planning_sample(sample_id, save_dir="data/calibration"))
+
+@router.post("/api/well-path/planning-acceptance/run-all")
+def planning_acceptance_run_all():
+    return data(run_all_planning_samples("data/calibration"))
+
+@router.get("/api/well-path/planning-acceptance/report")
+def planning_acceptance_report():
+    return data(latest_planning_acceptance_report("data/calibration/planning_acceptance_report.json"))
+
+@router.get("/api/well-path/planning-acceptance/report.csv")
+def planning_acceptance_report_csv():
+    report = latest_planning_acceptance_report("data/calibration/planning_acceptance_report.json")
+    text = planning_acceptance_csv(report)
+    return Response(
+        content="\ufeff" + text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=drillspace_planning_acceptance_report.csv"}
+    )

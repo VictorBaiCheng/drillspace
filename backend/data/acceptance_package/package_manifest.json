@@ -1,13 +1,15 @@
 {
-  "package": "/mnt/data/drillspace_v294_trajectory_acceptance_center/backend/data/acceptance_package/drillspace_stage_acceptance_package.zip",
-  "version": "2.9.4",
-  "createdAt": "2026-06-26 15:20:04",
+  "package": "/mnt/data/drillspace_v296_planning_solver_acceptance/backend/data/acceptance_package/drillspace_stage_acceptance_package.zip",
+  "version": "2.9.6",
+  "createdAt": "2026-06-26 22:34:53",
   "files": [
     "acceptance_package/stage_acceptance_summary.json",
     "acceptance_package/stage_acceptance_summary.md",
     "calibration/acceptance_report.json",
     "calibration/acceptance_report.csv",
     "calibration/collision_acceptance_report.json",
-    "calibration/collision_acceptance_report.csv"
+    "calibration/collision_acceptance_report.csv",
+    "calibration/planning_acceptance_report.json",
+    "calibration/planning_acceptance_report.csv"
   ]
 }
