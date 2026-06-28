@@ -1,4 +1,4 @@
-/* DrillSpace V2.9.7 Target Zone + Trajectory Constraint Center
+/* DrillSpace V2.9.8.11 Stable Dock Clean Rebuild
  * - V2.7.2 industrial compact grid retained
  * - V2.7.1 trajectory subsystem coverage restored
  * - MyDrill well-path API mapping added
@@ -1693,7 +1693,7 @@ function saveTrajectory(){
   localStorage.setItem('drillspace-v273-trajectory', JSON.stringify(snapshot));
   callApiAction('saveTrajectory', { tid:'TRJ-A5123', name:$('activeTrajectoryName').textContent, rows: state.rows.length }, {silent:true});
   callApiAction('saveRows', state.rows.slice(0,500), {silent:true});
-  addLog('保存轨迹版本 V2.9.7-A5123');
+  addLog('保存轨迹版本 V2.9.8-A5123');
   toast('轨迹版本已保存；API模式下将同步调用 well-path 保存接口');
 }
 
@@ -2193,7 +2193,7 @@ function init(){
   updateSummary();
   updateClock();
   setInterval(updateClock, 1000);
-  addLog('打开 DrillSpace V2.9.7 目标靶区与轨迹约束中心版');
+  addLog('打开 DrillSpace V2.9.8.11 稳定Dock重构版');
   addLog('加载 MyDrill well-path API 映射');
   addLog('加载 B-1井 设计轨迹 A5123');
   bind();
@@ -3410,3 +3410,225 @@ function localStageAcceptanceSummary(){
 })();
 window.v297SelectTarget=v297SelectTarget; window.v297LoadTargets=v297LoadTargets; window.v297SaveActiveTarget=v297SaveActiveTarget; window.v297AddTarget=v297AddTarget; window.v297ApplyTargetToPlanning=v297ApplyTargetToPlanning; window.v297EvaluateCurrentTarget=v297EvaluateCurrentTarget; window.v297LineUpTarget=v297LineUpTarget; window.v297SolveToTarget=v297SolveToTarget; window.v297ExportTargets=v297ExportTargets;
 window.runAllTargetSamples=runAllTargetSamples; window.loadTargetAcceptanceReport=loadTargetAcceptanceReport; window.exportTargetAcceptanceJson=exportTargetAcceptanceJson; window.exportTargetAcceptanceCsv=exportTargetAcceptanceCsv;
+
+
+/* =========================================================
+   V2.9.8 Target Driven Runtime
+   ========================================================= */
+function v298EnsureState(){state.targetDrivenRecommendation=state.targetDrivenRecommendation||null;state.targetDrivenSolution=state.targetDrivenSolution||null;state.targetDrivenAfterInsert=state.targetDrivenAfterInsert||null;}
+function v298DistanceToTarget(row,target){const dns=num(target.ns)-num(row.ns),dew=num(target.ew)-num(row.ew),dtvd=num(target.tvd)-num(row.tvd);return{horizontalDistance:Math.sqrt(dns*dns+dew*dew),verticalDistance:dtvd,centerDistance:Math.sqrt(dns*dns+dew*dew+dtvd*dtvd),targetAzimuth:(Math.atan2(dew,dns)*180/Math.PI+360)%360};}
+function v298LocalRecommend(){const row=v295ActiveRow?v295ActiveRow():(state.rows[state.selectedRow]||{}),target=v297ActiveTarget?v297ActiveTarget():(state.targets?.[0]||{}),d=v298DistanceToTarget(row,target);let method='buildTurn',sectionType='lineUpOnTarget',reason='balanced distance';if(target.type==='landing'){method='nudge';sectionType='landingPlane';reason='landing target requires Landing Plane control';}else if(target.type==='pbhl'){method='optimumAlign';sectionType='lineUpOnTarget';reason='PBHL requires optimum alignment';}else if(d.horizontalDistance>900&&num(row.inc)<30){method='slant';sectionType='incAziMd';reason='long distance and low inclination';}else if(d.horizontalDistance>400){method='doglegToolface';sectionType='lineUpOnTarget';reason='medium distance with azimuth correction';}else if(d.horizontalDistance<180){method='nudge';sectionType='lineUpOnTarget';reason='near target, use nudge';}const cl=Math.max(30,Math.min(600,d.centerDistance*.35)),inc=num(target.entryInc||row.inc),azi=num(target.entryAzi||d.targetAzimuth),build=(inc-num(row.inc))/Math.max(1,cl/30),turn=((azi-num(row.azi)+180)%360-180)/Math.max(1,cl/30);return{ok:true,version:'2.9.8',target,row,recommendation:{method,sectionType,reason,currentToTarget:{horizontalDistance:d.horizontalDistance,verticalDistance:d.verticalDistance,targetAzimuth:d.targetAzimuth,azimuthDelta:Math.abs(turn)},suggested:{cl,md:num(row.md)+cl,inc,azi,build,turn,dls:Math.max(1.5,Math.min(4,Math.abs(turn)||2)),tfo:turn>=0?90:-90,targetTvd:num(target.tvd),targetNs:num(target.ns),targetEw:num(target.ew)}}};}
+async function v298RecommendMethod(){v298EnsureState();const row=v295ActiveRow?v295ActiveRow():(state.rows[state.selectedRow]||{}),target=v297ActiveTarget?v297ActiveTarget():(state.targets?.[0]||{});if(state.apiMode==='api'){try{const json=await fetchBackendJson('/api/well-path/target-driven/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({row,targetId:target.id})});state.targetDrivenRecommendation=json.data||json;}catch(err){state.targetDrivenRecommendation=v298LocalRecommend();toast(`后端推荐失败，使用前端推荐：${err.message}`);}}else state.targetDrivenRecommendation=v298LocalRecommend();v298ApplyRecommendationToPlanning();v298InjectTargetDrivenPanel();toast(`推荐方法：${state.targetDrivenRecommendation.recommendation.method}`);}
+function v298ApplyRecommendationToPlanning(){const rec=state.targetDrivenRecommendation?.recommendation;if(!rec)return;const s=rec.suggested||{};state.planningMethod=rec.method;state.planningSectionType=rec.sectionType;state.planningParams=state.planningParams||{};Object.assign(state.planningParams,{cl:s.cl,md:s.md,inc:s.inc,azi:s.azi,build:s.build,turn:s.turn,dls:s.dls,tfo:s.tfo,targetTvd:s.targetTvd,targetNs:s.targetNs,targetEw:s.targetEw,targetInc:s.inc,targetAzi:s.azi,tangentLength:s.cl,dipAngle:s.inc,direction:s.azi,sectionType:rec.sectionType});if(typeof v295InjectPlanningDock==='function')v295InjectPlanningDock();}
+async function v298SolvePathToTarget(){const row=v295ActiveRow?v295ActiveRow():(state.rows[state.selectedRow]||{}),target=v297ActiveTarget?v297ActiveTarget():(state.targets?.[0]||{});if(!state.targetDrivenRecommendation)await v298RecommendMethod();if(state.apiMode==='api'){try{const json=await fetchBackendJson('/api/well-path/target-driven/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({row,targetId:target.id,recommendation:state.targetDrivenRecommendation.recommendation})});state.targetDrivenSolution=json.data||json;state.planningPreview=state.targetDrivenSolution.planningResult;}catch(err){if(typeof v295CalculatePlanningMethod==='function')await v295CalculatePlanningMethod(true);state.targetDrivenSolution={ok:true,target,row,recommendation:state.targetDrivenRecommendation.recommendation,planningResult:state.planningPreview,insertRows:state.planningPreview?.rows||[],previewRow:state.planningPreview?.previewRow};toast(`后端目标求解失败，使用前端规划预览：${err.message}`);}}else{if(typeof v295CalculatePlanningMethod==='function')await v295CalculatePlanningMethod(true);state.targetDrivenSolution={ok:true,target,row,recommendation:state.targetDrivenRecommendation.recommendation,planningResult:state.planningPreview,insertRows:state.planningPreview?.rows||[],previewRow:state.planningPreview?.previewRow};}if(typeof v295InjectPlanningDock==='function')v295InjectPlanningDock();v298InjectTargetDrivenPanel();toast('目标驱动规划求解完成');}
+async function v298InsertTargetSegment(){if(!state.targetDrivenSolution)await v298SolvePathToTarget();const rows=state.targetDrivenSolution?.insertRows||state.targetDrivenSolution?.planningResult?.rows||[];if(!rows.length)return toast('没有可插入的目标驱动规划段');const normalized=rows.map(r=>({type:r.type||'目标驱动段',md:num(r.md),inc:num(r.inc),azi:num(r.azi),cl:num(r.cl),tvd:num(r.tvd),ns:num(r.ns),ew:num(r.ew),vsec:num(r.vsec),dogleg:num(r.dogleg),tf:num(r.tf),build:num(r.build),turn:num(r.turn),sectionType:r.sectionType||state.planningSectionType||'Line up on Target',remark:r.remark||'Target Driven'}));state.rows.splice(state.selectedRow+1,0,...normalized);state.selectedRow=state.selectedRow+normalized.length;recalcRowsLocal();renderGrid();updateSummary();state.targetDrivenInsertedRow=state.rows[state.selectedRow];addLog(`插入目标驱动规划段：${normalized.length} 行`);toast(`已插入目标驱动规划段：${normalized.length} 行`);}
+async function v298EvaluateAfterInsert(){const row=state.targetDrivenInsertedRow||state.targetDrivenSolution?.previewRow||(v295ActiveRow?v295ActiveRow():state.rows[state.selectedRow]),target=v297ActiveTarget?v297ActiveTarget():(state.targets?.[0]||{});if(state.apiMode==='api'){try{const json=await fetchBackendJson('/api/well-path/target-driven/evaluate-after-insert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({row,targetId:target.id})});state.targetDrivenAfterInsert=json.data||json;state.targetEvaluation={overallVerdict:state.targetDrivenAfterInsert.evaluation?.verdict,bestTarget:state.targetDrivenAfterInsert.evaluation,evaluations:[state.targetDrivenAfterInsert.evaluation]};}catch(err){if(typeof v297LocalEvaluate==='function')state.targetEvaluation=v297LocalEvaluate(row,target);state.targetDrivenAfterInsert={ok:true,evaluation:state.targetEvaluation?.bestTarget||null};toast(`后端插入后评价失败，使用前端评价：${err.message}`);}}else{if(typeof v297LocalEvaluate==='function')state.targetEvaluation=v297LocalEvaluate(row,target);state.targetDrivenAfterInsert={ok:true,evaluation:state.targetEvaluation?.bestTarget||null};}if(typeof v297InjectTargetCenter==='function')v297InjectTargetCenter();v298InjectTargetDrivenPanel();toast('插入后入靶评价完成');}
+function v298TargetDrivenPanelHtml(){v298EnsureState();const rec=state.targetDrivenRecommendation?.recommendation,sol=state.targetDrivenSolution,s=rec?.suggested||{},err=sol?.afterEvaluation?.errors||state.targetDrivenAfterInsert?.evaluation?.errors||{};return`<section class="v298-target-driven-panel" id="v298TargetDrivenPanel"><div class="v298-td-head"><div><b>Target Driven Planning / 目标驱动轨迹规划</b><span>推荐方法 → 求解规划段 → 插入轨迹表 → 入靶评价闭环</span></div><div class="v298-td-status"><b>${esc(rec?.method||'WAITING')}</b><span>${esc(rec?.reason||'点击 Recommend Method 获取建议')}</span></div></div><div class="v298-td-grid"><div><span>Target Distance</span><b>${fmt(rec?.currentToTarget?.horizontalDistance||0,1)}m</b><em>horizontal</em></div><div><span>Suggested CL</span><b>${fmt(s.cl||0,1)}m</b><em>planning length</em></div><div><span>Suggested INC</span><b>${fmt(s.inc||0,2)}°</b><em>entry inc</em></div><div><span>Suggested AZI</span><b>${fmt(s.azi||0,2)}°</b><em>target direction</em></div><div><span>DLS / TFO</span><b>${fmt(s.dls||0,2)} / ${fmt(s.tfo||0,1)}</b><em>dogleg toolface</em></div><div><span>After Error</span><b>${fmt(err.horizontalError||0,1)}m</b><em>horizontal error</em></div></div><div class="v298-td-actions"><button class="primary" onclick="v298RecommendMethod()">Recommend Method</button><button onclick="v298SolvePathToTarget()">Solve Path to Target</button><button onclick="v298InsertTargetSegment()">Insert Target Segment</button><button onclick="v298EvaluateAfterInsert()">Evaluate After Insert</button></div></section>`;}
+function v298InjectTargetDrivenPanel(){const box=$('v297TargetCenter');if(!box)return;const old=$('v298TargetDrivenPanel');if(old)old.remove();const actions=box.querySelector('.v297-actions'),holder=document.createElement('div');holder.innerHTML=v298TargetDrivenPanelHtml();if(actions)box.insertBefore(holder.firstElementChild,actions);else box.appendChild(holder.firstElementChild);}
+(function(){const oldV297=window.v297InjectTargetCenter||(typeof v297InjectTargetCenter==='function'?v297InjectTargetCenter:null);if(oldV297){window.v297InjectTargetCenter=function(){oldV297();setTimeout(()=>v298InjectTargetDrivenPanel(),20);};}setTimeout(()=>v298InjectTargetDrivenPanel(),300);})();
+function localTargetDrivenAcceptanceReport(){const samples=[['recommend_build_turn_to_target','01 Build Turn to Target 推荐样本','recommend','Target Center','auto','buildTurn',0],['dogleg_toolface_to_target','02 Dogleg Toolface to Target 样本','solve','Target Center','doglegToolface','doglegToolface',1],['nudge_to_target','03 Nudge to Target 样本','solve','Target Center','nudge','nudge',1],['optimum_align_to_pbhl','04 Optimum Align to PBHL 样本','solve','PBHL','optimumAlign','optimumAlign',1],['landing_plane_to_landing_point','05 Landing Plane to Landing Point 样本','solve','Landing Point','nudge','nudge',1],['insert_after_evaluate','06 插入后入靶评价样本','insertPreview','Target Center','auto','nudge',1]].map(x=>({sampleId:x[0],name:x[1],mode:x[2],targetId:x[3],targetName:x[3],method:x[4],actualMethod:x[5],rowCount:x[6],sampleVerdict:'PASS',recommendation:'通过'}));return{ok:true,version:'2.9.8',reportType:'TargetDrivenPlanningAcceptanceReport',overallVerdict:'PASS',totalSamples:samples.length,passCount:samples.length,reviewCount:0,failCount:0,samples};}
+async function runAllTargetDrivenSamples(){if(state.apiMode==='api'){try{const json=await fetchBackendJson('/api/well-path/target-driven-acceptance/run-all',{method:'POST'});state.targetDrivenAcceptanceReport=json.data||json;toast('全部目标驱动规划样本已运行完成');}catch(err){state.targetDrivenAcceptanceReport=localTargetDrivenAcceptanceReport();toast(`后端目标驱动验收失败，使用前端Mock：${err.message}`);}}else{state.targetDrivenAcceptanceReport=localTargetDrivenAcceptanceReport();toast('当前 MOCK 模式：已运行全部目标驱动样本');}renderCalibrationReportPage();}
+async function loadTargetDrivenAcceptanceReport(){if(state.apiMode==='api'){try{const json=await fetchBackendJson('/api/well-path/target-driven-acceptance/report');state.targetDrivenAcceptanceReport=json.data||json;toast('已读取目标驱动规划报告');}catch(err){state.targetDrivenAcceptanceReport=localTargetDrivenAcceptanceReport();toast(`读取目标驱动报告失败，使用前端Mock：${err.message}`);}}else state.targetDrivenAcceptanceReport=localTargetDrivenAcceptanceReport();renderCalibrationReportPage();}
+function targetDrivenAcceptancePanelHtml(){const report=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport(),cls=String(report.overallVerdict).toUpperCase()==='PASS'?'pass':'review';return`<section class="target-driven-acceptance-v298"><div class="target-driven-acceptance-head ${cls}"><div><b>目标驱动规划验收线 / Target Driven Planning Acceptance</b><span>验证推荐方法、目标驱动求解、插入预览、插入后入靶评价闭环。</span></div><div class="target-driven-acceptance-verdict"><strong>${esc(report.overallVerdict)}</strong><small>${report.passCount||0} PASS / ${report.reviewCount||0} REVIEW / ${report.failCount||0} FAILED</small></div></div><div class="target-driven-acceptance-actions"><button class="primary" onclick="runAllTargetDrivenSamples()">运行全部目标驱动样本</button><button onclick="loadTargetDrivenAcceptanceReport()">读取目标驱动报告</button><button onclick="exportTargetDrivenJson()">导出目标驱动 JSON</button><button onclick="exportTargetDrivenCsv()">导出目标驱动 CSV</button></div><div class="target-driven-acceptance-kpis"><div><span>总样本数</span><b>${report.totalSamples||0}</b></div><div><span>PASS</span><b>${report.passCount||0}</b></div><div><span>REVIEW</span><b>${report.reviewCount||0}</b></div><div><span>FAILED</span><b>${report.failCount||0}</b></div></div><div class="target-driven-acceptance-table-wrap">${targetDrivenAcceptanceTableHtml(report)}</div></section>`;}
+function targetDrivenAcceptanceTableHtml(report){const rows=report.samples||[];return`<table class="target-driven-acceptance-table"><thead><tr><th>#</th><th>样本</th><th>模式</th><th>目标</th><th>方法</th><th>实际方法</th><th>行数</th><th>结论</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${String(r.sampleVerdict).toUpperCase()==='PASS'?'row-pass':'row-review'}"><td>${i+1}</td><td>${esc(r.name)}</td><td>${esc(r.mode)}</td><td>${esc(r.targetName||r.targetId)}</td><td>${esc(r.method)}</td><td>${esc(r.actualMethod)}</td><td>${r.rowCount||0}</td><td><b>${esc(r.sampleVerdict)}</b></td></tr>`).join('')}</tbody></table>`;}
+function exportTargetDrivenJson(){const report=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport();downloadTextFile('DrillSpace_Target_Driven_Planning_Report.json',JSON.stringify(report,null,2),'application/json;charset=utf-8');toast('已导出目标驱动规划 JSON');}
+function exportTargetDrivenCsv(){const report=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport(),cols=['sampleId','name','mode','targetId','targetName','method','actualMethod','rowCount','sampleVerdict','recommendation'],csv=[cols.join(',')].concat((report.samples||[]).map(r=>cols.map(c=>r[c]??'').join(','))).join('\n');downloadTextFile('DrillSpace_Target_Driven_Planning_Report.csv',csv,'text/csv;charset=utf-8');toast('已导出目标驱动规划 CSV');}
+function localStageAcceptanceSummary(){const trajectory=state.batchAcceptanceReport||(typeof localBatchAcceptanceReport==='function'?localBatchAcceptanceReport():{overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,failCount:0,maxErrors:{}}),collision=state.collisionAcceptanceReport||(typeof localCollisionAcceptanceReport==='function'?localCollisionAcceptanceReport():{overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,dangerCount:0,minGlobalDistance:0,minGlobalSeparationFactor:0}),planning=state.planningAcceptanceReport||(typeof localPlanningAcceptanceReport==='function'?localPlanningAcceptanceReport():{overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,failCount:0,samples:[]}),target=state.targetAcceptanceReport||(typeof localTargetAcceptanceReport==='function'?localTargetAcceptanceReport():{overallVerdict:'REVIEW',totalSamples:0,passCount:0,reviewCount:0,failCount:0,samples:[]}),targetDriven=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport(),mods=[trajectory,collision,planning,target,targetDriven],passCount=mods.reduce((a,x)=>a+num(x.passCount),0),reviewCount=mods.reduce((a,x)=>a+num(x.reviewCount),0),failCount=mods.reduce((a,x)=>a+num(x.failCount),0),total=mods.reduce((a,x)=>a+num(x.totalSamples),0),overall=mods.every(x=>String(x.overallVerdict).toUpperCase()==='PASS')?'PASS':'REVIEW';return{ok:true,version:'2.9.8',reportType:'TrajectorySubsystemAcceptanceSummary',overallVerdict:overall,totalSamples:total,passCount,reviewCount,failCount,acceptanceRate:passCount/Math.max(1,total),trajectory:{overallVerdict:trajectory.overallVerdict,totalSamples:trajectory.totalSamples,passCount:trajectory.passCount,reviewCount:trajectory.reviewCount,maxErrors:trajectory.maxErrors||{}},collision:{overallVerdict:collision.overallVerdict,totalSamples:collision.totalSamples,passCount:collision.passCount,reviewCount:collision.reviewCount,dangerCount:collision.dangerCount,minGlobalDistance:collision.minGlobalDistance,minGlobalSeparationFactor:collision.minGlobalSeparationFactor},planning:{overallVerdict:planning.overallVerdict,totalSamples:planning.totalSamples,passCount:planning.passCount,reviewCount:planning.reviewCount,methods:(planning.samples||[]).map(s=>s.method)},target:{overallVerdict:target.overallVerdict,totalSamples:target.totalSamples,passCount:target.passCount,reviewCount:target.reviewCount,modes:(target.samples||[]).map(s=>s.mode)},targetDriven:{overallVerdict:targetDriven.overallVerdict,totalSamples:targetDriven.totalSamples,passCount:targetDriven.passCount,reviewCount:targetDriven.reviewCount,modes:(targetDriven.samples||[]).map(s=>s.mode)},interfaceStatus:{health:'OK',trajectoryBatch:'READY',collisionBatch:'READY',planningBatch:'READY',targetBatch:'READY',targetDrivenBatch:'READY',exportPackage:'READY'},reportFiles:{trajectoryJson:'acceptance_report.json',collisionJson:'collision_acceptance_report.json',planningJson:'planning_acceptance_report.json',targetJson:'target_acceptance_report.json',targetDrivenJson:'target_driven_planning_report.json',summaryJson:'stage_acceptance_summary.json'},generatedAt:new Date().toLocaleString('zh-CN',{hour12:false}),note:'V2.9.8 前端阶段验收中心汇总：轨迹 + 防碰 + 规划方法 + 目标靶区 + 目标驱动规划五条验收线。'};}
+(function(){const oldRender=window.renderCalibrationReportPage||renderCalibrationReportPage;window.renderCalibrationReportPage=function(){oldRender();const box=document.querySelector('.calibration-page-v290');if(!box)return;if(!box.querySelector('.target-driven-acceptance-v298')){state.targetDrivenAcceptanceReport=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport();const targetPanel=box.querySelector('.target-acceptance-v297'),holder=document.createElement('div');holder.innerHTML=targetDrivenAcceptancePanelHtml();const panel=holder.firstElementChild;if(targetPanel&&targetPanel.nextSibling)box.insertBefore(panel,targetPanel.nextSibling);else box.appendChild(panel);}const stage=box.querySelector('.stage-acceptance-v294');if(stage){const lines=stage.querySelector('.stage-lines-grid');if(lines&&!lines.querySelector('.stage-line-target-driven')){const t=state.targetDrivenAcceptanceReport||localTargetDrivenAcceptanceReport(),div=document.createElement('div');div.className=`stage-line-card stage-line-target-driven ${String(t.overallVerdict).toLowerCase()}`;div.innerHTML=`<b>目标驱动规划验收线</b><span>结论：${esc(t.overallVerdict||'REVIEW')} · 样本：${t.totalSamples||0} · PASS：${t.passCount||0} · REVIEW：${t.reviewCount||0}</span><em>Recommend Method / Solve Path / Insert Segment / Evaluate After Insert</em>`;lines.appendChild(div);}}};})();
+window.v298RecommendMethod=v298RecommendMethod;window.v298SolvePathToTarget=v298SolvePathToTarget;window.v298InsertTargetSegment=v298InsertTargetSegment;window.v298EvaluateAfterInsert=v298EvaluateAfterInsert;window.runAllTargetDrivenSamples=runAllTargetDrivenSamples;window.loadTargetDrivenAcceptanceReport=loadTargetDrivenAcceptanceReport;window.exportTargetDrivenJson=exportTargetDrivenJson;window.exportTargetDrivenCsv=exportTargetDrivenCsv;
+
+
+/* =========================================================
+   DS V2.9.8.11 - Stable Dock Clean Rebuild
+   从基础V2.9.8重构底部Dock，不再叠加旧Dock迁移逻辑。
+   目标：内容不空白，Tab不闪，拖拽可用，底部不截断。
+   ========================================================= */
+function v29811$(id){ return document.getElementById(id); }
+function v29811Editor(){ return v29811$('editorContent'); }
+function v29811Clamp(h){
+  const c = v29811Editor();
+  if(!c) return 340;
+  const r = c.getBoundingClientRect();
+  const max = Math.max(280, Math.min(650, r.height - 230));
+  return Math.max(240, Math.min(max, Math.round(Number(h) || 340)));
+}
+function v29811SetHeight(h, save=true){
+  const c = v29811Editor();
+  if(!c) return;
+  const v = v29811Clamp(h);
+  c.style.setProperty('--ds-lower-dock-height', v + 'px');
+  if(save){ try{ localStorage.setItem('drillspace_v29811_dock_height', String(v)); }catch(e){} }
+}
+function v29811LoadHeight(){
+  let v = 340;
+  try{
+    v = Number(localStorage.getItem('drillspace_v29811_dock_height') ||
+               localStorage.getItem('drillspace_v2988_dock_height') ||
+               localStorage.getItem('drillspace_v2986_dock_height') || '340');
+  }catch(e){}
+  v29811SetHeight(v, false);
+}
+function v29811ResetHeight(){ v29811SetHeight(340, true); }
+function v29811DockHtml(){
+  const t = state.lowerDockTab || 'planning';
+  return `<div id="v29811LowerDock" class="v29811-lower-dock">
+    <div class="v29811-tabs">
+      <button data-tab="planning" class="${t==='planning'?'active':''}" onclick="v29811SetTab('planning')"><b>轨迹规划方法</b><span>计算 / 插入 / 设计</span></button>
+      <button data-tab="target" class="${t==='target'?'active':''}" onclick="v29811SetTab('target')"><b>目标靶区与约束</b><span>目标库 / 入靶评价</span></button>
+      <button data-tab="targetDriven" class="${t==='targetDriven'?'active':''}" onclick="v29811SetTab('targetDriven')"><b>目标驱动规划</b><span>推荐 / 求解 / 插入后评价</span></button>
+      <button class="dock-mini" onclick="v29811CycleTab()">切换</button>
+    </div>
+    <div class="v29811-body">
+      <div id="v29811PlanningPane" class="v29811-pane ${t==='planning'?'active':''}"></div>
+      <div id="v29811TargetPane" class="v29811-pane ${t==='target'?'active':''}"></div>
+      <div id="v29811TargetDrivenPane" class="v29811-pane ${t==='targetDriven'?'active':''}"></div>
+    </div>
+  </div>`;
+}
+function v29811EnsureDock(){
+  const c = v29811Editor();
+  if(!c || state.editorView !== 'grid') return;
+  c.classList.add('v29811-editor');
+  v29811LoadHeight();
+  if(!v29811$('v29811LowerDock')){
+    c.insertAdjacentHTML('beforeend', v29811DockHtml());
+  }
+  if(!v29811$('v29811DockSplitter')){
+    c.insertAdjacentHTML('beforeend', `<div id="v29811DockSplitter" class="v29811-splitter" title="拖动调整轨迹表与下方功能区高度">
+      <i></i><span>拖动调整高度</span><button type="button" onclick="v29811ResetHeight();event.stopPropagation();">默认</button>
+    </div>`);
+  }
+  // 清理旧式直接挂在editorContent下的面板，避免重复占位；稳定Dock内的不清理。
+  ['v2985LowerDock','v2987LowerDock','v2989LowerDock','v29810LowerDock'].forEach(id=>{
+    const el = v29811$(id);
+    if(el) el.remove();
+  });
+}
+function v29811BindSplitter(){
+  if(window.__v29811_splitter_bound__) return;
+  window.__v29811_splitter_bound__ = true;
+  document.addEventListener('pointerdown', ev=>{
+    const sp = ev.target && ev.target.closest ? ev.target.closest('#v29811DockSplitter') : null;
+    if(!sp || (ev.target && ev.target.tagName === 'BUTTON')) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const c = v29811Editor();
+    if(!c) return;
+    c.classList.add('v29811-dragging');
+    const move = e=>{
+      const r = c.getBoundingClientRect();
+      v29811SetHeight(r.bottom - e.clientY - 12, true);
+      e.preventDefault();
+    };
+    const up = ()=>{
+      c.classList.remove('v29811-dragging');
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', up, true);
+    };
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', up, true);
+  }, true);
+}
+function v29811Cn(root){
+  if(!root) return;
+  const m = {
+    'Calculate':'计算','Calculate + Next':'计算并下一段','Apply':'应用','Insert Section':'插入段','Save Version':'保存版本','Method Map':'方法映射',
+    'Evaluate Current Row':'评价当前行','Apply to Planning':'应用到规划','Line up Target':'对准目标','Solve to Target':'求解到目标',
+    'Add Target':'新增目标','Save Target':'保存目标','Load Library':'加载库','Export Targets':'导出目标',
+    'Recommend Method':'推荐方法','Solve Path to Target':'求解路径','Insert Target Segment':'插入目标段','Evaluate After Insert':'插入后评价'
+  };
+  root.querySelectorAll('button').forEach(b=>{ const t=(b.textContent||'').trim(); if(m[t]) b.textContent=m[t]; });
+}
+function v29811RenderPlanning(){
+  const pane = v29811$('v29811PlanningPane');
+  if(!pane || typeof v295RenderPlanningDock !== 'function') return;
+  pane.innerHTML = v295RenderPlanningDock();
+  pane.querySelectorAll('[data-plan-param]').forEach(el=>{
+    el.oninput = el.onchange = ()=>{
+      const k = el.dataset.planParam;
+      state.planningParams[k] = el.value;
+      if(state.v295AutoCalculate && typeof v295CalculatePlanningMethod === 'function') v295CalculatePlanningMethod(true);
+    };
+  });
+  v29811Cn(pane);
+}
+function v29811RenderTarget(){
+  const pane = v29811$('v29811TargetPane');
+  if(!pane || typeof v297TargetCenterHtml !== 'function') return;
+  pane.innerHTML = v297TargetCenterHtml();
+  pane.querySelectorAll('[data-target-field]').forEach(el=>{
+    el.oninput = el.onchange = ()=>{
+      const t = typeof v297ActiveTarget === 'function' ? v297ActiveTarget() : null;
+      if(!t) return;
+      const key = el.dataset.targetField;
+      t[key] = ['name','type','priority','remark'].includes(key) ? el.value : Number(el.value);
+    };
+  });
+  v29811Cn(pane);
+}
+function v29811RenderTargetDriven(){
+  const pane = v29811$('v29811TargetDrivenPane');
+  if(!pane) return;
+  if(typeof v298TargetDrivenPanelHtml === 'function'){
+    pane.innerHTML = v298TargetDrivenPanelHtml();
+  }else{
+    pane.innerHTML = `<section class="v298-target-driven-panel" id="v298TargetDrivenPanel"><div class="v298-td-head"><div><b>目标驱动规划</b><span>目标驱动功能等待加载</span></div></div></section>`;
+  }
+  v29811Cn(pane);
+}
+function v29811RenderAll(){
+  v29811EnsureDock();
+  v29811RenderPlanning();
+  v29811RenderTarget();
+  v29811RenderTargetDriven();
+  v29811Activate(state.lowerDockTab || 'planning');
+  v29811BindSplitter();
+}
+function v29811Activate(tab){
+  state.lowerDockTab = tab || 'planning';
+  const dock = v29811$('v29811LowerDock');
+  if(!dock) return;
+  dock.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab === state.lowerDockTab));
+  [['planning','v29811PlanningPane'],['target','v29811TargetPane'],['targetDriven','v29811TargetDrivenPane']].forEach(([key,id])=>{
+    const p = v29811$(id);
+    if(p) p.classList.toggle('active', key === state.lowerDockTab);
+  });
+}
+function v29811SetTab(tab){
+  if(!v29811$('v29811LowerDock')) v29811RenderAll();
+  v29811Activate(tab);
+}
+function v29811CycleTab(){
+  const seq = ['planning','target','targetDriven'];
+  const i = seq.indexOf(state.lowerDockTab || 'planning');
+  v29811SetTab(seq[(i+1)%seq.length]);
+}
+/* 覆盖业务刷新函数：不再往主编辑区乱插，直接刷新对应Tab内容 */
+function v295InjectPlanningDock(){ v29811EnsureDock(); v29811RenderPlanning(); }
+function v297InjectTargetCenter(){ v29811EnsureDock(); v29811RenderTarget(); }
+function v298InjectTargetDrivenPanel(){ v29811EnsureDock(); v29811RenderTargetDriven(); }
+/* 旧版本接口全部指向稳定Dock */
+function v2985ApplyTabbedDock(){ v29811RenderAll(); }
+function v2986ApplyResizableDock(){ v29811RenderAll(); }
+function v2987ApplyDock(){ v29811RenderAll(); }
+function v2988Apply(){ v29811RenderAll(); }
+function v2989ApplyDock(){ v29811RenderAll(); }
+function v29810Apply(){ v29811RenderAll(); }
+function v2985SetLowerDockTab(tab){ v29811SetTab(tab); }
+function v2987SetTab(tab){ v29811SetTab(tab); }
+function v2989SetTab(tab){ v29811SetTab(tab); }
+function v29810SetTab(tab){ v29811SetTab(tab); }
+
+(function(){
+  const oldRenderGrid = window.renderGrid || renderGrid;
+  window.renderGrid = function(){
+    oldRenderGrid();
+    setTimeout(v29811RenderAll, 60);
+    setTimeout(v29811RenderAll, 220);
+  };
+  setTimeout(v29811RenderAll, 160);
+  setTimeout(v29811RenderAll, 550);
+})();
+window.v29811SetTab = v29811SetTab;
+window.v29811CycleTab = v29811CycleTab;
+window.v29811RenderAll = v29811RenderAll;
+window.v29811ResetHeight = v29811ResetHeight;

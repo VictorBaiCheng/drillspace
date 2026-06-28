@@ -1677,8 +1677,8 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_far_safe_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_far_safe_report.json"
     },
     {
       "ok": true,
@@ -3273,8 +3273,8 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_nearby_risk_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_nearby_risk_report.json"
     },
     {
       "ok": true,
@@ -4869,8 +4869,8 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_low_sf_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_low_sf_report.json"
     },
     {
       "ok": true,
@@ -6465,8 +6465,8 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_normal_plane_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_normal_plane_report.json"
     },
     {
       "ok": true,
@@ -8061,8 +8061,8 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_horizontal_scan_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_horizontal_scan_report.json"
     },
     {
       "ok": true,
@@ -9657,10 +9657,10 @@
         }
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/collision_ellipsoid_amplified_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/collision_ellipsoid_amplified_report.json"
     }
   ],
-  "generatedAt": "2026-06-26 22:57:47",
+  "generatedAt": "2026-06-26 23:31:24",
   "note": "Collision acceptance samples verify distance, SF, normal/horizontal scan and ellipsoid uncertainty workflows."
 }

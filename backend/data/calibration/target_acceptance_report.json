@@ -181,11 +181,11 @@
         },
         "status": "IN_TARGET",
         "verdict": "PASS",
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_circle_hit_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_circle_hit_report.json"
     },
     {
       "ok": true,
@@ -281,11 +281,11 @@
         },
         "status": "IN_TARGET",
         "verdict": "PASS",
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_ellipse_hit_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_ellipse_hit_report.json"
     },
     {
       "ok": true,
@@ -381,11 +381,11 @@
         },
         "status": "MISS",
         "verdict": "REVIEW",
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_miss_offset_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_miss_offset_report.json"
     },
     {
       "ok": true,
@@ -481,11 +481,11 @@
         },
         "status": "CLEAR",
         "verdict": "PASS",
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_no_go_clear_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_no_go_clear_report.json"
     },
     {
       "ok": true,
@@ -644,13 +644,13 @@
             "errors": [],
             "warnings": []
           },
-          "generatedAt": "2026-06-26 22:57:47"
+          "generatedAt": "2026-06-26 23:31:24"
         },
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_line_up_target_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_line_up_target_report.json"
     },
     {
       "ok": true,
@@ -810,7 +810,7 @@
             "errors": [],
             "warnings": []
           },
-          "generatedAt": "2026-06-26 22:57:47"
+          "generatedAt": "2026-06-26 23:31:24"
         },
         "evaluation": {
           "ok": true,
@@ -890,13 +890,13 @@
           },
           "status": "MISS",
           "verdict": "REVIEW",
-          "generatedAt": "2026-06-26 22:57:47"
+          "generatedAt": "2026-06-26 23:31:24"
         },
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_landing_plane_target_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_landing_plane_target_report.json"
     },
     {
       "ok": true,
@@ -1056,7 +1056,7 @@
             "errors": [],
             "warnings": []
           },
-          "generatedAt": "2026-06-26 22:57:47"
+          "generatedAt": "2026-06-26 23:31:24"
         },
         "evaluation": {
           "ok": true,
@@ -1136,15 +1136,15 @@
           },
           "status": "MISS",
           "verdict": "REVIEW",
-          "generatedAt": "2026-06-26 22:57:47"
+          "generatedAt": "2026-06-26 23:31:24"
         },
-        "generatedAt": "2026-06-26 22:57:47"
+        "generatedAt": "2026-06-26 23:31:24"
       },
       "recommendation": "通过",
-      "generatedAt": "2026-06-26 22:57:47",
-      "savedReport": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/calibration/target_optimum_align_target_report.json"
+      "generatedAt": "2026-06-26 23:31:24",
+      "savedReport": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/calibration/target_optimum_align_target_report.json"
     }
   ],
-  "generatedAt": "2026-06-26 22:57:47",
+  "generatedAt": "2026-06-26 23:31:24",
   "note": "Target acceptance line verifies target evaluation, circular/elliptical target, no-go zone, line-up target and target-driven planning."
 }

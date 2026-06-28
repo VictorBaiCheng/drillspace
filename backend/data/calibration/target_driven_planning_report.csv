@@ -1,0 +1,7 @@
+﻿sampleId,name,mode,targetId,targetName,method,actualMethod,rowCount,sampleVerdict,recommendation
+recommend_build_turn_to_target,01 Build Turn to Target 推荐样本,recommend,target_center,Target Center / 靶心,auto,doglegToolface,0,PASS,通过
+dogleg_toolface_to_target,02 Dogleg Toolface to Target 样本,solve,target_center,Target Center / 靶心,doglegToolface,doglegToolface,1,PASS,通过
+nudge_to_target,03 Nudge to Target 样本,solve,target_center,Target Center / 靶心,nudge,nudge,1,PASS,通过
+optimum_align_to_pbhl,04 Optimum Align to PBHL 样本,solve,pbhl,PBHL / 设计井底,optimumAlign,optimumAlign,1,PASS,通过
+landing_plane_to_landing_point,05 Landing Plane to Landing Point 样本,solve,landing_point,Landing Point / 着陆点,nudge,nudge,1,PASS,通过
+insert_after_evaluate,06 插入后入靶评价样本,insertPreview,target_center,Target Center / 靶心,auto,buildTurn,1,PASS,通过

@@ -1,7 +1,7 @@
 {
-  "package": "/mnt/data/drillspace_v297_target_constraint_center/backend/data/acceptance_package/drillspace_stage_acceptance_package.zip",
-  "version": "2.9.7",
-  "createdAt": "2026-06-26 22:57:47",
+  "package": "/mnt/data/drillspace_v298_target_driven_planning/backend/data/acceptance_package/drillspace_stage_acceptance_package.zip",
+  "version": "2.9.8",
+  "createdAt": "2026-06-26 23:31:24",
   "files": [
     "acceptance_package/stage_acceptance_summary.json",
     "acceptance_package/stage_acceptance_summary.md",
@@ -12,6 +12,8 @@
     "calibration/planning_acceptance_report.json",
     "calibration/planning_acceptance_report.csv",
     "calibration/target_acceptance_report.json",
-    "calibration/target_acceptance_report.csv"
+    "calibration/target_acceptance_report.csv",
+    "calibration/target_driven_planning_report.json",
+    "calibration/target_driven_planning_report.csv"
   ]
 }

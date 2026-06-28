@@ -11,6 +11,7 @@ from app.services.acceptance_samples import acceptance_report_csv, batch_accepta
 from app.services.collision_acceptance_samples import collision_acceptance_csv, latest_collision_acceptance_report, run_all_collision_samples
 from app.services.planning_acceptance import latest_planning_acceptance_report, planning_acceptance_csv, run_all_planning_samples
 from app.services.target_acceptance import latest_target_acceptance_report, run_all_target_acceptance_samples, target_acceptance_csv
+from app.services.target_driven_acceptance import latest_target_driven_report, run_all_target_driven_samples, target_driven_csv
 
 
 def _safe_report(callable_obj, fallback: Dict[str, Any]) -> Dict[str, Any]:
@@ -39,8 +40,8 @@ def _overall(*verdicts: str) -> str:
 
 
 def _md_summary(summary: Dict[str, Any]) -> str:
-    lines = [
-        "# DrillSpace V2.9.7 轨迹子系统阶段验收说明",
+    return "\n".join([
+        "# DrillSpace V2.9.8 轨迹子系统阶段验收说明",
         "",
         f"- 生成时间：{summary.get('generatedAt')}",
         f"- 总体结论：{summary.get('overallVerdict')}",
@@ -48,6 +49,7 @@ def _md_summary(summary: Dict[str, Any]) -> str:
         f"- 防碰扫描验收：{summary.get('collision', {}).get('overallVerdict')}",
         f"- 规划方法验收：{summary.get('planning', {}).get('overallVerdict')}",
         f"- 目标靶区验收：{summary.get('target', {}).get('overallVerdict')}",
+        f"- 目标驱动规划验收：{summary.get('targetDriven', {}).get('overallVerdict')}",
         f"- 样本总数：{summary.get('totalSamples')}",
         f"- PASS：{summary.get('passCount')}",
         f"- REVIEW：{summary.get('reviewCount')}",
@@ -55,15 +57,14 @@ def _md_summary(summary: Dict[str, Any]) -> str:
         "",
         "## 阶段结论",
         "",
-        "当前版本已完成轨迹计算、防碰扫描、规划方法、目标靶区四条验收线的标准样本库、批量运行、总报告生成与 JSON/CSV 导出。",
+        "当前版本已完成轨迹计算、防碰扫描、规划方法、目标靶区、目标驱动规划五条验收线的标准样本库、批量运行、总报告生成与 JSON/CSV 导出。",
         "",
         "## 下一步建议",
         "",
-        "1. 增强目标驱动规划方法求解精度。",
-        "2. 接入真实 MyDrill / Compass CSV 样本管理。",
+        "1. 接入真实 MyDrill / Compass CSV 对照样本管理。",
+        "2. 增强 Optimum Align / Landing Plane 的工程精确解。",
         "3. Java Bridge 直连 cal_wellbore.dll。",
-    ]
-    return "\n".join(lines)
+    ])
 
 
 def acceptance_summary_from_reports(
@@ -71,42 +72,19 @@ def acceptance_summary_from_reports(
     collision: Dict[str, Any],
     planning: Dict[str, Any],
     target: Dict[str, Any],
+    target_driven: Dict[str, Any],
 ) -> Dict[str, Any]:
-    t_samples = int(trajectory.get("totalSamples", 0) or 0)
-    c_samples = int(collision.get("totalSamples", 0) or 0)
-    p_samples = int(planning.get("totalSamples", 0) or 0)
-    g_samples = int(target.get("totalSamples", 0) or 0)
-
-    pass_count = (
-        int(trajectory.get("passCount", 0) or 0)
-        + int(collision.get("passCount", 0) or 0)
-        + int(planning.get("passCount", 0) or 0)
-        + int(target.get("passCount", 0) or 0)
-    )
-    review_count = (
-        int(trajectory.get("reviewCount", 0) or 0)
-        + int(collision.get("reviewCount", 0) or 0)
-        + int(planning.get("reviewCount", 0) or 0)
-        + int(target.get("reviewCount", 0) or 0)
-    )
-    fail_count = (
-        int(trajectory.get("failCount", 0) or 0)
-        + int(collision.get("failCount", 0) or 0)
-        + int(planning.get("failCount", 0) or 0)
-        + int(target.get("failCount", 0) or 0)
-    )
-    total = t_samples + c_samples + p_samples + g_samples
+    modules = [trajectory, collision, planning, target, target_driven]
+    total = sum(int(m.get("totalSamples", 0) or 0) for m in modules)
+    pass_count = sum(int(m.get("passCount", 0) or 0) for m in modules)
+    review_count = sum(int(m.get("reviewCount", 0) or 0) for m in modules)
+    fail_count = sum(int(m.get("failCount", 0) or 0) for m in modules)
 
     return {
         "ok": True,
-        "version": "2.9.7",
+        "version": "2.9.8",
         "reportType": "TrajectorySubsystemAcceptanceSummary",
-        "overallVerdict": _overall(
-            trajectory.get("overallVerdict"),
-            collision.get("overallVerdict"),
-            planning.get("overallVerdict"),
-            target.get("overallVerdict"),
-        ),
+        "overallVerdict": _overall(*(m.get("overallVerdict") for m in modules)),
         "totalSamples": total,
         "passCount": pass_count,
         "reviewCount": review_count,
@@ -114,14 +92,14 @@ def acceptance_summary_from_reports(
         "acceptanceRate": round(pass_count / max(1, total), 4),
         "trajectory": {
             "overallVerdict": trajectory.get("overallVerdict", "REVIEW"),
-            "totalSamples": t_samples,
+            "totalSamples": trajectory.get("totalSamples", 0),
             "passCount": trajectory.get("passCount", 0),
             "reviewCount": trajectory.get("reviewCount", 0),
             "maxErrors": trajectory.get("maxErrors", {}),
         },
         "collision": {
             "overallVerdict": collision.get("overallVerdict", "REVIEW"),
-            "totalSamples": c_samples,
+            "totalSamples": collision.get("totalSamples", 0),
             "passCount": collision.get("passCount", 0),
             "reviewCount": collision.get("reviewCount", 0),
             "dangerCount": collision.get("dangerCount", 0),
@@ -130,17 +108,24 @@ def acceptance_summary_from_reports(
         },
         "planning": {
             "overallVerdict": planning.get("overallVerdict", "REVIEW"),
-            "totalSamples": p_samples,
+            "totalSamples": planning.get("totalSamples", 0),
             "passCount": planning.get("passCount", 0),
             "reviewCount": planning.get("reviewCount", 0),
             "methods": [r.get("method") for r in planning.get("samples", [])],
         },
         "target": {
             "overallVerdict": target.get("overallVerdict", "REVIEW"),
-            "totalSamples": g_samples,
+            "totalSamples": target.get("totalSamples", 0),
             "passCount": target.get("passCount", 0),
             "reviewCount": target.get("reviewCount", 0),
             "modes": [r.get("mode") for r in target.get("samples", [])],
+        },
+        "targetDriven": {
+            "overallVerdict": target_driven.get("overallVerdict", "REVIEW"),
+            "totalSamples": target_driven.get("totalSamples", 0),
+            "passCount": target_driven.get("passCount", 0),
+            "reviewCount": target_driven.get("reviewCount", 0),
+            "modes": [r.get("mode") for r in target_driven.get("samples", [])],
         },
         "interfaceStatus": {
             "health": "OK",
@@ -148,6 +133,7 @@ def acceptance_summary_from_reports(
             "collisionBatch": "READY",
             "planningBatch": "READY",
             "targetBatch": "READY",
+            "targetDrivenBatch": "READY",
             "exportPackage": "READY",
         },
         "reportFiles": {
@@ -159,11 +145,13 @@ def acceptance_summary_from_reports(
             "planningCsv": "backend/data/calibration/planning_acceptance_report.csv",
             "targetJson": "backend/data/calibration/target_acceptance_report.json",
             "targetCsv": "backend/data/calibration/target_acceptance_report.csv",
+            "targetDrivenJson": "backend/data/calibration/target_driven_planning_report.json",
+            "targetDrivenCsv": "backend/data/calibration/target_driven_planning_report.csv",
             "summaryJson": "backend/data/acceptance_package/stage_acceptance_summary.json",
             "summaryMd": "backend/data/acceptance_package/stage_acceptance_summary.md",
         },
         "generatedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "note": "Stage acceptance center consolidates trajectory, collision, planning-method and target-constraint acceptance workflows.",
+        "note": "Stage acceptance center consolidates trajectory, collision, planning-method, target-constraint and target-driven planning workflows.",
     }
 
 
@@ -177,7 +165,9 @@ def run_stage_acceptance(base_dir: str = "data") -> Dict[str, Any]:
     collision = run_all_collision_samples(calibration_dir)
     planning = run_all_planning_samples(calibration_dir)
     target = run_all_target_acceptance_samples(calibration_dir)
-    summary = acceptance_summary_from_reports(trajectory, collision, planning, target)
+    target_driven = run_all_target_driven_samples(calibration_dir)
+
+    summary = acceptance_summary_from_reports(trajectory, collision, planning, target, target_driven)
 
     with open(os.path.join(package_dir, "stage_acceptance_summary.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
@@ -191,6 +181,8 @@ def run_stage_acceptance(base_dir: str = "data") -> Dict[str, Any]:
         f.write(planning_acceptance_csv(planning))
     with open(os.path.join(calibration_dir, "target_acceptance_report.csv"), "w", encoding="utf-8-sig") as f:
         f.write(target_acceptance_csv(target))
+    with open(os.path.join(calibration_dir, "target_driven_planning_report.csv"), "w", encoding="utf-8-sig") as f:
+        f.write(target_driven_csv(target_driven))
     return summary
 
 
@@ -200,11 +192,14 @@ def latest_stage_acceptance_summary(base_dir: str = "data") -> Dict[str, Any]:
     if os.path.exists(summary_path):
         with open(summary_path, "r", encoding="utf-8") as f:
             return json.load(f)
-    trajectory = _safe_report(lambda: latest_batch_acceptance_report(os.path.join(base_dir, "calibration", "acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
-    collision = _safe_report(lambda: latest_collision_acceptance_report(os.path.join(base_dir, "calibration", "collision_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "dangerCount": 0})
-    planning = _safe_report(lambda: latest_planning_acceptance_report(os.path.join(base_dir, "calibration", "planning_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
-    target = _safe_report(lambda: latest_target_acceptance_report(os.path.join(base_dir, "calibration", "target_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
-    return acceptance_summary_from_reports(trajectory, collision, planning, target)
+
+    calibration_dir = os.path.join(base_dir, "calibration")
+    trajectory = _safe_report(lambda: latest_batch_acceptance_report(os.path.join(calibration_dir, "acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
+    collision = _safe_report(lambda: latest_collision_acceptance_report(os.path.join(calibration_dir, "collision_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "dangerCount": 0})
+    planning = _safe_report(lambda: latest_planning_acceptance_report(os.path.join(calibration_dir, "planning_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
+    target = _safe_report(lambda: latest_target_acceptance_report(os.path.join(calibration_dir, "target_acceptance_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
+    target_driven = _safe_report(lambda: latest_target_driven_report(os.path.join(calibration_dir, "target_driven_planning_report.json")), {"overallVerdict": "REVIEW", "totalSamples": 0, "passCount": 0, "reviewCount": 0, "failCount": 0})
+    return acceptance_summary_from_reports(trajectory, collision, planning, target, target_driven)
 
 
 def export_stage_acceptance_package(base_dir: str = "data") -> Dict[str, Any]:
@@ -213,7 +208,7 @@ def export_stage_acceptance_package(base_dir: str = "data") -> Dict[str, Any]:
     calibration_dir = os.path.join(base_dir, "calibration")
     os.makedirs(package_dir, exist_ok=True)
     zip_path = os.path.join(package_dir, "drillspace_stage_acceptance_package.zip")
-    manifest = {"package": zip_path, "version": "2.9.7", "createdAt": time.strftime("%Y-%m-%d %H:%M:%S"), "files": []}
+    manifest = {"package": zip_path, "version": "2.9.8", "createdAt": time.strftime("%Y-%m-%d %H:%M:%S"), "files": []}
     files = [
         os.path.join(package_dir, "stage_acceptance_summary.json"),
         os.path.join(package_dir, "stage_acceptance_summary.md"),
@@ -225,6 +220,8 @@ def export_stage_acceptance_package(base_dir: str = "data") -> Dict[str, Any]:
         os.path.join(calibration_dir, "planning_acceptance_report.csv"),
         os.path.join(calibration_dir, "target_acceptance_report.json"),
         os.path.join(calibration_dir, "target_acceptance_report.csv"),
+        os.path.join(calibration_dir, "target_driven_planning_report.json"),
+        os.path.join(calibration_dir, "target_driven_planning_report.csv"),
     ]
     manifest_path = os.path.join(package_dir, "package_manifest.json")
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -248,4 +245,5 @@ def stage_summary_csv(summary: Dict[str, Any]) -> str:
     writer.writerow({"line": "2", "module": "collision", "verdict": summary.get("collision", {}).get("overallVerdict"), "samples": summary.get("collision", {}).get("totalSamples"), "pass": summary.get("collision", {}).get("passCount"), "review": summary.get("collision", {}).get("reviewCount"), "failed_or_danger": summary.get("collision", {}).get("dangerCount"), "keyMetric": f"minDistance={summary.get('collision', {}).get('minGlobalDistance')}; minSF={summary.get('collision', {}).get('minGlobalSeparationFactor')}"})
     writer.writerow({"line": "3", "module": "planning", "verdict": summary.get("planning", {}).get("overallVerdict"), "samples": summary.get("planning", {}).get("totalSamples"), "pass": summary.get("planning", {}).get("passCount"), "review": summary.get("planning", {}).get("reviewCount"), "failed_or_danger": "", "keyMetric": ",".join(summary.get("planning", {}).get("methods", []) or [])})
     writer.writerow({"line": "4", "module": "target", "verdict": summary.get("target", {}).get("overallVerdict"), "samples": summary.get("target", {}).get("totalSamples"), "pass": summary.get("target", {}).get("passCount"), "review": summary.get("target", {}).get("reviewCount"), "failed_or_danger": "", "keyMetric": ",".join(summary.get("target", {}).get("modes", []) or [])})
+    writer.writerow({"line": "5", "module": "targetDriven", "verdict": summary.get("targetDriven", {}).get("overallVerdict"), "samples": summary.get("targetDriven", {}).get("totalSamples"), "pass": summary.get("targetDriven", {}).get("passCount"), "review": summary.get("targetDriven", {}).get("reviewCount"), "failed_or_danger": "", "keyMetric": ",".join(summary.get("targetDriven", {}).get("modes", []) or [])})
     return buf.getvalue()

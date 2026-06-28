@@ -1,0 +1,74 @@
+{
+  "ok": true,
+  "sampleId": "recommend_build_turn_to_target",
+  "sample": {
+    "id": "recommend_build_turn_to_target",
+    "name": "01 Build Turn to Target 推荐样本",
+    "mode": "recommend",
+    "targetId": "target_center",
+    "targetName": "Target Center / 靶心",
+    "method": "auto",
+    "desc": "中远距离目标，验证推荐方法与建议参数输出。"
+  },
+  "sampleVerdict": "PASS",
+  "actualMethod": "doglegToolface",
+  "rowCount": 0,
+  "result": {
+    "ok": true,
+    "version": "2.9.8",
+    "target": {
+      "id": "target_center",
+      "name": "Target Center / 靶心",
+      "type": "target",
+      "tvd": 3500.0,
+      "ns": 2050.0,
+      "ew": 1560.0,
+      "verticalSection": 2570.0,
+      "radius": 35.0,
+      "ellipseMajor": 60.0,
+      "ellipseMinor": 35.0,
+      "entryInc": 86.0,
+      "entryAzi": 121.8,
+      "tolerance": 20.0,
+      "priority": "primary",
+      "enabled": true,
+      "remark": "主目标靶区"
+    },
+    "row": {
+      "md": 2600,
+      "inc": 45,
+      "azi": 105,
+      "tvd": 2300,
+      "ns": 950,
+      "ew": 680
+    },
+    "recommendation": {
+      "method": "doglegToolface",
+      "sectionType": "lineUpOnTarget",
+      "reason": "medium distance with azimuth correction",
+      "currentToTarget": {
+        "horizontalDistance": 1408.6873,
+        "verticalDistance": 1200.0,
+        "targetAzimuth": 38.6598,
+        "azimuthDelta": 66.3402
+      },
+      "suggested": {
+        "cl": 240.0,
+        "md": 2840.0,
+        "inc": 86.0,
+        "azi": 38.6598,
+        "build": 5.125,
+        "turn": -8.2925,
+        "dls": 4.0,
+        "tfo": -90.0,
+        "targetTvd": 3500.0,
+        "targetNs": 2050.0,
+        "targetEw": 1560.0
+      }
+    },
+    "generatedAt": "2026-06-26 23:31:24"
+  },
+  "errors": [],
+  "recommendation": "通过",
+  "generatedAt": "2026-06-26 23:31:24"
+}
